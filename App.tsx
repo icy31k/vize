@@ -395,25 +395,8 @@ function Desktop() {
           )}
         </View>
       )}
-      <ScrollView
-        style={{
-          flex: 1,
-        }}
-        contentContainerStyle={layout.scroll}
-        keyboardShouldPersistTaps="handled"
-      >
-        {tab === 'Focus Desk' && (
-          <FocusDesk
-            today={today}
-            status={status}
-            data={data}
-            busy={busy}
-            ready={ready}
-            narrow={narrow}
-            run={run}
-          />
-        )}
-        {tab === 'Activity Journal' && (
+      {tab === 'Activity Journal'
+        ? (
           <Journal
             date={journalDay}
             today={today}
@@ -423,19 +406,38 @@ function Desktop() {
             narrow={narrow}
             run={run}
           />
+        )
+        : (
+          <ScrollView
+            style={layout.root}
+            contentContainerStyle={layout.scroll}
+            keyboardShouldPersistTaps="handled"
+          >
+            {tab === 'Focus Desk'
+              ? (
+                <FocusDesk
+                  today={today}
+                  status={status}
+                  data={data}
+                  busy={busy}
+                  ready={ready}
+                  narrow={narrow}
+                  run={run}
+                />
+              )
+              : (
+                <Report
+                  date={reportDay}
+                  today={today}
+                  setDate={setReportDay}
+                  mode={mode}
+                  setMode={setMode}
+                  data={data}
+                  narrow={narrow}
+                />
+              )}
+          </ScrollView>
         )}
-        {tab === 'Weekly Review' && (
-          <Report
-            date={reportDay}
-            today={today}
-            setDate={setReportDay}
-            mode={mode}
-            setMode={setMode}
-            data={data}
-            narrow={narrow}
-          />
-        )}
-      </ScrollView>
       {tab !== 'Focus Desk' && (
         <View
           style={[
@@ -1073,7 +1075,12 @@ function Journal({
   };
 
   return (
-    <>
+    <View
+      style={[
+        layout.root,
+        layout.scroll,
+      ]}
+    >
       <Title
         label="Activity Journal"
         date={fullDate(date)}
@@ -1087,19 +1094,11 @@ function Journal({
       </Title>
       <View
         style={[
-          layout.columns,
+          layout.journalColumns,
           narrow && layout.stacked,
         ]}
       >
-        <Panel
-          style={
-            !narrow
-              ? {
-              flex: 1.6,
-            }
-              : undefined
-          }
-        >
+        <Panel style={layout.activityPanel}>
           <View
             style={styles.between}
           >
@@ -1124,79 +1123,243 @@ function Journal({
               {duration(total)} active
             </Text>
           </View>
-          {data.activities.length === 0 && (
-            <Text
+          <ScrollView
+            key={range.from}
+            style={layout.root}
+            keyboardShouldPersistTaps="handled"
+          >
+            {data.activities.length === 0 && (
+              <Text
+                style={[
+                  styles.small,
+                  {
+                    color: c.muted,
+                    marginTop: 14,
+                  },
+                ]}
+              >
+                No captured activity for this day.
+              </Text>
+            )}
+            {data.activities.map(activity => (
+              <Pressable
+                key={activity.id}
+                accessibilityRole="button"
+                accessibilityState={{ selected: activity.id === selection }}
+                onPress={() => choose(activity)}
+                style={({ pressed }) => [
+                  styles.between,
+                  layout.activity,
+                  {
+                    backgroundColor:
+                      pressed ||
+                      activity.id === selection
+                        ? c.accentSoft
+                        : c.card,
+                    borderBottomColor: c.border,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.small,
+                    styles.numbers,
+                    {
+                      color: c.muted,
+                      width: 76,
+                    },
+                  ]}
+                >
+                  {timeLabel(Math.max(activity.start, range.from))}
+                </Text>
+                <View
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                  }}
+                >
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      color: c.ink,
+                      fontWeight: '600',
+                    }}
+                  >
+                    {activity.appName}
+                  </Text>
+                  <View
+                    style={[
+                      styles.row,
+                      {
+                        gap: 6,
+                      },
+                    ]}
+                  >
+                    <Dot
+                      color={categoryColor(c, activity.categoryID)}
+                      size={6}
+                    />
+                    <Text
+                      numberOfLines={1}
+                      style={[
+                        styles.small,
+                        {
+                          color: c.muted,
+                          flexShrink: 1,
+                        },
+                      ]}
+                    >
+                      {names.get(activity.categoryID)}
+                    </Text>
+                  </View>
+                </View>
+                <Text
+                  style={[
+                    styles.numbers,
+                    {
+                      color: c.ink,
+                    },
+                  ]}
+                >
+                  {duration(overlap(activity, range))}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </Panel>
+        <ScrollView
+          style={[
+            layout.categoryPanel,
+            narrow && layout.stackedCategoryPanel,
+          ]}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Panel>
+            <View
               style={[
-                styles.small,
-                {
-                  color: c.muted,
-                  marginTop: 14,
-                },
-              ]}
-            >
-              No captured activity for this day.
-            </Text>
-          )}
-          {data.activities.map(activity => (
-            <Pressable
-              key={activity.id}
-              accessibilityRole="button"
-              accessibilityState={{ selected: activity.id === selection }}
-              onPress={() => choose(activity)}
-              style={({ pressed }) => [
                 styles.between,
-                layout.activity,
-                {
-                  backgroundColor:
-                    pressed ||
-                    activity.id === selection
-                      ? c.accentSoft
-                      : c.card,
-                  borderBottomColor: c.border,
-                },
+                styles.wrap,
               ]}
             >
               <Text
                 style={[
-                  styles.small,
-                  styles.numbers,
+                  styles.section,
                   {
-                    color: c.muted,
-                    width: 76,
+                    color: c.ink,
                   },
                 ]}
               >
-                {timeLabel(Math.max(activity.start, range.from))}
+                Categories
               </Text>
+              <Button
+                label={
+                  creating
+                    ? 'Cancel'
+                    : 'New category'
+                }
+                kind="quiet"
+                onPress={() => setCreating(!creating)}
+              />
+            </View>
+            {creating && (
               <View
-                style={{
-                  flex: 1,
-                  minWidth: 0,
-                }}
+                style={[
+                  styles.row,
+                  {
+                    gap: 6,
+                    marginTop: 9,
+                    marginBottom: 6,
+                  },
+                ]}
               >
+                <TextField
+                  accessibilityLabel="Category name"
+                  placeholder="Category name"
+                  value={name}
+                  onChangeText={setName}
+                  maxLength={40}
+                  style={layout.categoryField}
+                />
+                <Button
+                  label="Add"
+                  kind="primary"
+                  disabled={
+                    busy ||
+                    !name.trim()
+                  }
+                  onPress={async () => {
+                    if (await run(() => tracker!.createCategory(name))) {
+                      setName('');
+                      setCreating(false);
+                    }
+                  }}
+                />
+              </View>
+            )}
+            {selected
+              ? (
+              <>
                 <Text
-                  numberOfLines={1}
                   style={{
                     color: c.ink,
-                    fontWeight: '600',
+                    fontSize: 19,
+                    fontWeight: '700',
+                    marginTop: 15,
                   }}
                 >
-                  {activity.appName}
+                  {selected.appName}
+                </Text>
+                <Text
+                  style={[
+                    styles.small,
+                    {
+                      color: c.muted,
+                      marginBottom: 11,
+                    },
+                  ]}
+                >
+                  {timeLabel(Math.max(selected.start, range.from))} ·{' '}
+                  {duration(overlap(selected, range))}
                 </Text>
                 <View
                   style={[
                     styles.row,
+                    styles.wrap,
                     {
                       gap: 6,
                     },
                   ]}
                 >
-                  <Dot
-                    color={categoryColor(c, activity.categoryID)}
-                    size={6}
+                  {data.categories.map(category => (
+                    <Button
+                      key={category.id}
+                      label={category.name}
+                      selected={category.id === categoryID}
+                      onPress={() => {
+                        setCategoryID(category.id);
+                        setSaved(false);
+                      }}
+                    />
+                  ))}
+                </View>
+                <View
+                  style={[
+                    styles.row,
+                    {
+                      gap: 8,
+                      marginVertical: 14,
+                    },
+                  ]}
+                >
+                  <Switch
+                    accessibilityLabel="Use for future blocks from this app"
+                    value={asDefault}
+                    onValueChange={value => {
+                      setDefault(value);
+                      setSaved(false);
+                    }}
                   />
                   <Text
-                    numberOfLines={1}
                     style={[
                       styles.small,
                       {
@@ -1205,222 +1368,64 @@ function Journal({
                       },
                     ]}
                   >
-                    {names.get(activity.categoryID)}
+                    Use for future blocks from this app
                   </Text>
                 </View>
-              </View>
-              <Text
-                style={[
-                  styles.numbers,
-                  {
-                    color: c.ink,
-                  },
-                ]}
-              >
-                {duration(overlap(activity, range))}
-              </Text>
-            </Pressable>
-          ))}
-        </Panel>
-        <Panel
-          style={
-            !narrow
-              ? {
-              flex: 1,
-            }
-              : undefined
-          }
-        >
-          <View
-            style={[
-              styles.between,
-              styles.wrap,
-            ]}
-          >
-            <Text
-              style={[
-                styles.section,
-                {
-                  color: c.ink,
-                },
-              ]}
-            >
-              Categories
-            </Text>
-            <Button
-              label={
-                creating
-                  ? 'Cancel'
-                  : 'New category'
-              }
-              kind="quiet"
-              onPress={() => setCreating(!creating)}
-            />
-          </View>
-          {creating && (
-            <View
-              style={[
-                styles.row,
-                {
-                  gap: 6,
-                  marginTop: 9,
-                  marginBottom: 6,
-                },
-              ]}
-            >
-              <TextField
-                accessibilityLabel="Category name"
-                placeholder="Category name"
-                value={name}
-                onChangeText={setName}
-                maxLength={40}
-                style={layout.categoryField}
-              />
-              <Button
-                label="Add"
-                kind="primary"
-                disabled={
-                  busy ||
-                  !name.trim()
-                }
-                onPress={async () => {
-                  if (await run(() => tracker!.createCategory(name))) {
-                    setName('');
-                    setCreating(false);
+                <Button
+                  label="Save category"
+                  kind="primary"
+                  disabled={
+                    busy ||
+                    categoryID === undefined
                   }
-                }}
-              />
-            </View>
-          )}
-          {selected
-            ? (
-            <>
-              <Text
-                style={{
-                  color: c.ink,
-                  fontSize: 19,
-                  fontWeight: '700',
-                  marginTop: 15,
-                }}
-              >
-                {selected.appName}
-              </Text>
+                  onPress={async () => {
+                    if (
+                      categoryID !== undefined &&
+                      (await run(() =>
+                        tracker!.assignCategory(
+                          selected.id,
+                          categoryID,
+                          asDefault,
+                        ),
+                      ))
+                    ) {
+                      setSaved(true);
+                    }
+                  }}
+                />
+                {saved && (
+                  <Text
+                    accessibilityLiveRegion="polite"
+                    style={[
+                      styles.small,
+                      {
+                        color: c.accent,
+                        marginTop: 8,
+                      },
+                    ]}
+                  >
+                    Category saved.
+                  </Text>
+                )}
+              </>
+            )
+              : (
               <Text
                 style={[
                   styles.small,
                   {
                     color: c.muted,
-                    marginBottom: 11,
+                    marginTop: 13,
                   },
                 ]}
               >
-                {timeLabel(Math.max(selected.start, range.from))} ·{' '}
-                {duration(overlap(selected, range))}
+                Select an activity block to assign a category.
               </Text>
-              <View
-                style={[
-                  styles.row,
-                  styles.wrap,
-                  {
-                    gap: 6,
-                  },
-                ]}
-              >
-                {data.categories.map(category => (
-                  <Button
-                    key={category.id}
-                    label={category.name}
-                    selected={category.id === categoryID}
-                    onPress={() => {
-                      setCategoryID(category.id);
-                      setSaved(false);
-                    }}
-                  />
-                ))}
-              </View>
-              <View
-                style={[
-                  styles.row,
-                  {
-                    gap: 8,
-                    marginVertical: 14,
-                  },
-                ]}
-              >
-                <Switch
-                  accessibilityLabel="Use for future blocks from this app"
-                  value={asDefault}
-                  onValueChange={value => {
-                    setDefault(value);
-                    setSaved(false);
-                  }}
-                />
-                <Text
-                  style={[
-                    styles.small,
-                    {
-                      color: c.muted,
-                      flexShrink: 1,
-                    },
-                  ]}
-                >
-                  Use for future blocks from this app
-                </Text>
-              </View>
-              <Button
-                label="Save category"
-                kind="primary"
-                disabled={
-                  busy ||
-                  categoryID === undefined
-                }
-                onPress={async () => {
-                  if (
-                    categoryID !== undefined &&
-                    (await run(() =>
-                      tracker!.assignCategory(
-                        selected.id,
-                        categoryID,
-                        asDefault,
-                      ),
-                    ))
-                  ) {
-                    setSaved(true);
-                  }
-                }}
-              />
-              {saved && (
-                <Text
-                  accessibilityLiveRegion="polite"
-                  style={[
-                    styles.small,
-                    {
-                      color: c.accent,
-                      marginTop: 8,
-                    },
-                  ]}
-                >
-                  Category saved.
-                </Text>
-              )}
-            </>
-          )
-            : (
-            <Text
-              style={[
-                styles.small,
-                {
-                  color: c.muted,
-                  marginTop: 13,
-                },
-              ]}
-            >
-              Select an activity block to assign a category.
-            </Text>
-          )}
-        </Panel>
+            )}
+          </Panel>
+        </ScrollView>
       </View>
-    </>
+    </View>
   );
 }
 
@@ -1791,6 +1796,25 @@ const layout = StyleSheet.create({
   stacked: {
     flexDirection: 'column',
     alignItems: 'stretch',
+  },
+  journalColumns: {
+    flex: 1,
+    flexDirection: 'row',
+    minHeight: 0,
+    gap: 15,
+  },
+  activityPanel: {
+    flex: 1.6,
+    minHeight: 0,
+  },
+  categoryPanel: {
+    flex: 1,
+    minHeight: 0,
+    minWidth: 0,
+  },
+  stackedCategoryPanel: {
+    flex: 0,
+    maxHeight: '55%',
   },
   timerPanel: {
     alignItems: 'center',
