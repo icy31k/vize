@@ -573,6 +573,12 @@ function FocusDesk({
   const [focus, setFocus] = useState('25');
   const [rest, setRest] = useState('5');
   const totals = summarize(data.activities, dayRange(today));
+  const categoriesByDuration = data.categories
+    .map(category => ({
+      category,
+      seconds: totals.categories.get(category.id) ?? 0,
+    }))
+    .sort((a, b) => b.seconds - a.seconds);
 
   return (
     <>
@@ -875,15 +881,15 @@ function FocusDesk({
                 },
               ]}
             >
-              {data.categories
-                .filter(category => totals.categories.has(category.id))
-                .map(category => (
+              {categoriesByDuration
+                .filter(({ seconds }) => seconds > 0)
+                .map(({ category, seconds }) => (
                   <View
                     key={category.id}
                     style={[
                       layout.allocationSegment,
                       {
-                        flex: totals.categories.get(category.id),
+                        flex: seconds,
                         backgroundColor: categoryColor(c, category.id),
                       },
                     ]}
@@ -891,11 +897,11 @@ function FocusDesk({
                 ))}
             </View>
           )}
-          {data.categories.map(category => (
+          {categoriesByDuration.map(({ category, seconds }) => (
             <CategoryRow
               key={category.id}
               category={category}
-              value={duration(totals.categories.get(category.id) ?? 0)}
+              value={duration(seconds)}
             />
           ))}
           {!totals.total && (
