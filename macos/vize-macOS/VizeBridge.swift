@@ -52,6 +52,24 @@ final class VizeBridge: RCTEventEmitter {
         }
     }
 
+    @objc(assignGroupCategory:category:saveDefault:resolver:rejecter:)
+    func assignGroupCategory(
+        _ ids: [NSNumber],
+        category: NSNumber,
+        saveDefault: Bool,
+        resolver resolve: RCTPromiseResolveBlock,
+        rejecter reject: RCTPromiseRejectBlock
+    ) {
+        perform(resolve, reject) {
+            try VizeService.shared.assignGroupCategory(
+                ids.map(\.int64Value),
+                category: category.int64Value,
+                saveDefault: saveDefault
+            )
+            return nil
+        }
+    }
+
     @objc(timerCommand:resolver:rejecter:)
     func timerCommand(_ command: String, resolver resolve: RCTPromiseResolveBlock, rejecter reject: RCTPromiseRejectBlock) {
         perform(resolve, reject) { try VizeService.shared.timerCommand(command); return nil }

@@ -45,6 +45,34 @@ enum NativeChecks {
         let later = try reopened.activities(from: 185, to: 300)
         precondition(later.map(\.id) == [third.id])
 
+        let research = try store.addCategory("Browser research")
+        let entertainment = try store.addCategory("Entertainment")
+        let browser = "test.browser"
+        let yesterday = try store.beginActivity(appID: browser, name: "Browser", start: 250)
+        try store.checkpoint(yesterday, end: 260)
+        let morning = try store.beginActivity(appID: browser, name: "Browser", start: 305)
+        try store.checkpoint(morning, end: 315)
+        let evening = try store.beginActivity(appID: browser, name: "Browser", start: 320)
+        try store.checkpoint(evening, end: 335)
+        let otherApp = try store.beginActivity(appID: id, name: "Editor", start: 315)
+        try store.checkpoint(otherApp, end: 320)
+
+        try store.assignCategory(activityIDs: [morning.id, evening.id], categoryID: research.id, saveDefault: false)
+        try store.assignCategory(activityID: evening.id, categoryID: entertainment.id, saveDefault: false)
+        let categorized = try reopened.activities(from: 250, to: 400)
+        precondition(categorized.map(\.categoryID) == [Store.uncategorized, research.id, design.id, entertainment.id])
+        let browserDefault = try store.categoryForApp(browser)
+        precondition(browserDefault == Store.uncategorized)
+        do {
+            try store.assignCategory(activityIDs: [morning.id, otherApp.id], categoryID: entertainment.id, saveDefault: true)
+            preconditionFailure("A group may only include blocks from one app.")
+        } catch StoreError.invalid {
+            let afterFailedAssignment = try reopened.activities(from: 250, to: 400)
+            precondition(afterFailedAssignment.map(\.categoryID) == categorized.map(\.categoryID))
+            let unchangedDefault = try store.categoryForApp(browser)
+            precondition(unchangedDefault == browserDefault)
+        }
+
         var timer = TimerState()
         try timer.setDurations(focus: 1, rest: 1)
         timer.start(at: 1_000)
@@ -60,7 +88,7 @@ enum NativeChecks {
         try store.saveTimer(timer.encoded(), completion: expired.completion)
         let completed = try reopened.pomodoros(from: 1_000, to: 1_100)
         precondition(completed == 1)
-        print("Capture boundaries, SQLite persistence, future app defaults, pause/resume, and timer completion verified.")
+        print("Capture boundaries, SQLite persistence, group categories, individual exceptions, app defaults, and timer verified.")
     }
 
     private static func checkForegroundIdentity() {

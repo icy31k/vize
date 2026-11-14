@@ -85,6 +85,7 @@ export function Button({
   onPress,
   kind = 'plain',
   selected,
+  expanded,
   disabled,
   a11y,
   style,
@@ -93,6 +94,7 @@ export function Button({
   onPress: () => void;
   kind?: 'plain' | 'primary' | 'inverse' | 'quiet';
   selected?: boolean;
+  expanded?: boolean;
   disabled?: boolean;
   a11y?: string;
   style?: ViewStyle;
@@ -106,7 +108,11 @@ export function Button({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={a11y ?? label}
-      accessibilityState={{ disabled, selected }}
+      accessibilityState={{
+        disabled,
+        selected,
+        expanded,
+      }}
       disabled={disabled}
       onPress={onPress}
       onHoverIn={() => setHovered(true)}

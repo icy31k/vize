@@ -17,6 +17,11 @@ type Bridge = {
     category: number,
     saveDefault: boolean,
   ): Promise<void>;
+  assignGroupCategory(
+    ids: number[],
+    category: number,
+    saveDefault: boolean,
+  ): Promise<void>;
   timerCommand(
     command: 'start' | 'pause' | 'reset' | 'focus' | 'rest',
   ): Promise<void>;

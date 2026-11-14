@@ -242,6 +242,11 @@ final class VizeService {
         publish()
     }
 
+    func assignGroupCategory(_ ids: [Int64], category: Int64, saveDefault: Bool) throws {
+        try requireStore().assignCategory(activityIDs: ids, categoryID: category, saveDefault: saveDefault)
+        publish()
+    }
+
     private func reconcileTimer(_ store: Store, at timestamp: Double) throws {
         var updated = timer
         let result = updated.advance(at: timestamp)

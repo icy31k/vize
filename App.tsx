@@ -403,7 +403,6 @@ function Desktop() {
             setDate={setJournalDay}
             data={data}
             busy={busy}
-            narrow={narrow}
             run={run}
           />
         )
@@ -1032,13 +1031,20 @@ function DateNav({
   );
 }
 
+type JournalGroup = {
+  appID: string;
+  appName: string;
+  activities: Activity[];
+  seconds: number;
+  categories: Set<number>;
+};
+
 function Journal({
   date,
   today,
   setDate,
   data,
   busy,
-  narrow,
   run,
 }: {
   date: Date;
@@ -1046,32 +1052,131 @@ function Journal({
   setDate: (date: Date) => void;
   data: History;
   busy: boolean;
-  narrow: boolean;
   run: Action;
 }) {
   const c = usePalette();
-  const [selection, setSelection] = useState<number>();
-  const [categoryID, setCategoryID] = useState<number>();
-  const [asDefault, setDefault] = useState(false);
+  const [view, setView] = useState<'grouped' | 'timeline'>('grouped');
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+  const [selection, setSelection] = useState<string>();
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState('');
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState<string>();
   const range = dayRange(date);
-  const selected = data.activities.find(activity => activity.id === selection);
-  const total = summarize(data.activities, range).total;
+  const groups = new Map<string, JournalGroup>();
   const names = new Map(
     data.categories.map(category => [category.id, category.name]),
   );
+  let total = 0;
 
-  const choose = (activity: Activity) => {
-    setSelection(activity.id);
-    setCategoryID(activity.categoryID);
-    setDefault(false);
-    setSaved(false);
+  for (const activity of data.activities) {
+    const seconds = overlap(activity, range);
+    total += seconds;
+    let group = groups.get(activity.appID);
+    if (!group) {
+      group = {
+        appID: activity.appID,
+        appName: activity.appName,
+        activities: [],
+        seconds: 0,
+        categories: new Set(),
+      };
+      groups.set(activity.appID, group);
+    }
+    group.activities.push(activity);
+    group.seconds += seconds;
+    group.categories.add(activity.categoryID);
+  }
+
+  const choose = (key: string) => {
+    setSelection(previous =>
+      previous === key
+        ? undefined
+        : key,
+    );
+    setSaved(undefined);
   };
+
+  const changeView = (next: typeof view) => {
+    if (next === view) {
+      return;
+    }
+    setView(next);
+    setSelection(undefined);
+    setSaved(undefined);
+  };
+
   const go = (day: Date) => {
     setSelection(undefined);
+    setExpanded(new Set());
+    setSaved(undefined);
     setDate(day);
+  };
+
+  const renderEditor = (
+    key: string,
+    appName: string,
+    activities: Activity[],
+    categoryID: number | undefined,
+    forGroup: boolean,
+  ) => {
+    if (key !== selection) {
+      return null;
+    }
+    return (
+      <JournalCategoryEditor
+        key={key}
+        appName={appName}
+        activities={activities}
+        initialCategoryID={categoryID}
+        categories={data.categories}
+        range={range}
+        forGroup={forGroup}
+        busy={busy}
+        run={run}
+        onCancel={() => setSelection(undefined)}
+        onSave={categoryName => {
+          setSelection(previous =>
+            previous === key
+              ? undefined
+              : previous,
+          );
+          setSaved(
+            forGroup
+              ? `${appName} · ${activities.length} entries set to ${categoryName}.`
+              : `${appName} at ${timeLabel(Math.max(activities[0].start, range.from))} set to ${categoryName}.`,
+          );
+        }}
+      />
+    );
+  };
+
+  const renderActivity = (activity: Activity, grouped: boolean) => {
+    const key = `entry:${activity.id}`;
+    const time = timeLabel(Math.max(activity.start, range.from));
+    const category = names.get(activity.categoryID);
+    return (
+      <View key={key}>
+        <JournalRow
+          label={
+            grouped
+              ? time
+              : activity.appName
+          }
+          detail={
+            grouped
+              ? undefined
+              : time
+          }
+          a11y={`Select ${activity.appName} at ${time}, ${category ?? 'Uncategorized'}`}
+          category={category}
+          categoryID={activity.categoryID}
+          seconds={overlap(activity, range)}
+          selected={selection === key}
+          onPress={() => choose(key)}
+        />
+        {renderEditor(key, activity.appName, [activity], activity.categoryID, false)}
+      </View>
+    );
   };
 
   return (
@@ -1092,16 +1197,14 @@ function Journal({
           future={date >= today}
         />
       </Title>
-      <View
-        style={[
-          layout.journalColumns,
-          narrow && layout.stacked,
-        ]}
-      >
-        <Panel style={layout.activityPanel}>
-          <View
-            style={styles.between}
-          >
+      <Panel style={layout.activityPanel}>
+        <View
+          style={[
+            styles.between,
+            styles.wrap,
+          ]}
+        >
+          <View style={layout.journalControls}>
             <Text
               style={[
                 styles.section,
@@ -1114,6 +1217,7 @@ function Journal({
             </Text>
             <Text
               style={[
+                styles.small,
                 styles.numbers,
                 {
                   color: c.muted,
@@ -1123,307 +1227,425 @@ function Journal({
               {duration(total)} active
             </Text>
           </View>
-          <ScrollView
-            key={range.from}
-            style={layout.root}
-            keyboardShouldPersistTaps="handled"
-          >
-            {data.activities.length === 0 && (
-              <Text
-                style={[
-                  styles.small,
-                  {
-                    color: c.muted,
-                    marginTop: 14,
-                  },
-                ]}
-              >
-                No captured activity for this day.
-              </Text>
-            )}
-            {data.activities.map(activity => (
-              <Pressable
-                key={activity.id}
-                accessibilityRole="button"
-                accessibilityState={{ selected: activity.id === selection }}
-                onPress={() => choose(activity)}
-                style={({ pressed }) => [
-                  styles.between,
-                  layout.activity,
-                  {
-                    backgroundColor:
-                      pressed ||
-                      activity.id === selection
-                        ? c.accentSoft
-                        : c.card,
-                    borderBottomColor: c.border,
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.small,
-                    styles.numbers,
-                    {
-                      color: c.muted,
-                      width: 76,
-                    },
-                  ]}
-                >
-                  {timeLabel(Math.max(activity.start, range.from))}
-                </Text>
-                <View
-                  style={{
-                    flex: 1,
-                    minWidth: 0,
-                  }}
-                >
-                  <Text
-                    numberOfLines={1}
-                    style={{
-                      color: c.ink,
-                      fontWeight: '600',
-                    }}
-                  >
-                    {activity.appName}
-                  </Text>
-                  <View
-                    style={[
-                      styles.row,
-                      {
-                        gap: 6,
-                      },
-                    ]}
-                  >
-                    <Dot
-                      color={categoryColor(c, activity.categoryID)}
-                      size={6}
+          <View style={layout.journalControls}>
+            <Button
+              label="Grouped by app"
+              selected={view === 'grouped'}
+              onPress={() => changeView('grouped')}
+            />
+            <Button
+              label="Timeline"
+              selected={view === 'timeline'}
+              onPress={() => changeView('timeline')}
+            />
+            <Button
+              label={
+                creating
+                  ? 'Cancel'
+                  : 'New category'
+              }
+              a11y={
+                creating
+                  ? 'Cancel creating category'
+                  : 'New category'
+              }
+              kind="quiet"
+              onPress={() => setCreating(previous => !previous)}
+            />
+          </View>
+        </View>
+        {creating && (
+          <View style={layout.categoryCreation}>
+            <TextField
+              accessibilityLabel="Category name"
+              placeholder="Category name"
+              value={name}
+              onChangeText={setName}
+              maxLength={40}
+              style={layout.categoryField}
+            />
+            <Button
+              label="Add"
+              kind="primary"
+              disabled={
+                busy ||
+                !name.trim()
+              }
+              onPress={async () => {
+                if (await run(() => tracker!.createCategory(name))) {
+                  setName('');
+                  setCreating(false);
+                }
+              }}
+            />
+          </View>
+        )}
+        <ScrollView
+          key={`${range.from}/${view}`}
+          style={layout.root}
+          keyboardShouldPersistTaps="handled"
+        >
+          {data.activities.length === 0 && (
+            <Text
+              style={[
+                styles.small,
+                {
+                  color: c.muted,
+                  marginTop: 14,
+                },
+              ]}
+            >
+              No captured activity for this day.
+            </Text>
+          )}
+          {view === 'grouped'
+            ? Array.from(groups.values(), group => {
+              const key = `app:${group.appID}`;
+              const open = expanded.has(group.appID);
+              const count = group.activities.length;
+              const entryCount =
+                count === 1
+                  ? '1 entry'
+                  : `${count} entries`;
+              const disclosureLabel =
+                open
+                  ? `Collapse ${group.appName} entries`
+                  : `Expand ${group.appName} entries`;
+              const mixed = group.categories.size > 1;
+              const categoryID =
+                mixed
+                  ? undefined
+                  : group.activities[0].categoryID;
+              const category =
+                categoryID === undefined
+                  ? 'Mixed categories'
+                  : names.get(categoryID);
+              return (
+                <View key={key}>
+                  <View style={styles.row}>
+                    <Button
+                      label={
+                        open
+                          ? '⌄'
+                          : '›'
+                      }
+                      a11y={disclosureLabel}
+                      expanded={open}
+                      kind="quiet"
+                      style={layout.disclosure}
+                      onPress={() => {
+                        const next = new Set(expanded);
+                        if (open) {
+                          next.delete(group.appID);
+                          if (group.activities.some(activity => `entry:${activity.id}` === selection)) {
+                            setSelection(undefined);
+                          }
+                        } else {
+                          next.add(group.appID);
+                        }
+                        setExpanded(next);
+                      }}
                     />
-                    <Text
-                      numberOfLines={1}
+                    <JournalRow
+                      label={group.appName}
+                      detail={entryCount}
+                      a11y={`Edit ${group.appName} group, ${entryCount}, ${category ?? 'Uncategorized'}`}
+                      category={category}
+                      categoryID={categoryID}
+                      seconds={group.seconds}
+                      selected={selection === key}
+                      onPress={() => choose(key)}
+                    />
+                  </View>
+                  {(open || selection === key) && (
+                    <View
                       style={[
-                        styles.small,
+                        layout.journalEntries,
                         {
-                          color: c.muted,
-                          flexShrink: 1,
+                          borderLeftColor: c.border,
                         },
                       ]}
                     >
-                      {names.get(activity.categoryID)}
-                    </Text>
-                  </View>
+                      {renderEditor(key, group.appName, group.activities, categoryID, true)}
+                      {open && group.activities.map(activity => renderActivity(activity, true))}
+                    </View>
+                  )}
                 </View>
-                <Text
-                  style={[
-                    styles.numbers,
-                    {
-                      color: c.ink,
-                    },
-                  ]}
-                >
-                  {duration(overlap(activity, range))}
-                </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-        </Panel>
-        <ScrollView
-          style={[
-            layout.categoryPanel,
-            narrow && layout.stackedCategoryPanel,
-          ]}
-          keyboardShouldPersistTaps="handled"
-        >
-          <Panel>
-            <View
-              style={[
-                styles.between,
-                styles.wrap,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.section,
-                  {
-                    color: c.ink,
-                  },
-                ]}
-              >
-                Categories
-              </Text>
-              <Button
-                label={
-                  creating
-                    ? 'Cancel'
-                    : 'New category'
-                }
-                kind="quiet"
-                onPress={() => setCreating(!creating)}
-              />
-            </View>
-            {creating && (
-              <View
-                style={[
-                  styles.row,
-                  {
-                    gap: 6,
-                    marginTop: 9,
-                    marginBottom: 6,
-                  },
-                ]}
-              >
-                <TextField
-                  accessibilityLabel="Category name"
-                  placeholder="Category name"
-                  value={name}
-                  onChangeText={setName}
-                  maxLength={40}
-                  style={layout.categoryField}
-                />
-                <Button
-                  label="Add"
-                  kind="primary"
-                  disabled={
-                    busy ||
-                    !name.trim()
-                  }
-                  onPress={async () => {
-                    if (await run(() => tracker!.createCategory(name))) {
-                      setName('');
-                      setCreating(false);
-                    }
-                  }}
-                />
-              </View>
-            )}
-            {selected
-              ? (
-              <>
-                <Text
-                  style={{
-                    color: c.ink,
-                    fontSize: 19,
-                    fontWeight: '700',
-                    marginTop: 15,
-                  }}
-                >
-                  {selected.appName}
-                </Text>
-                <Text
-                  style={[
-                    styles.small,
-                    {
-                      color: c.muted,
-                      marginBottom: 11,
-                    },
-                  ]}
-                >
-                  {timeLabel(Math.max(selected.start, range.from))} ·{' '}
-                  {duration(overlap(selected, range))}
-                </Text>
-                <View
-                  style={[
-                    styles.row,
-                    styles.wrap,
-                    {
-                      gap: 6,
-                    },
-                  ]}
-                >
-                  {data.categories.map(category => (
-                    <Button
-                      key={category.id}
-                      label={category.name}
-                      selected={category.id === categoryID}
-                      onPress={() => {
-                        setCategoryID(category.id);
-                        setSaved(false);
-                      }}
-                    />
-                  ))}
-                </View>
-                <View
-                  style={[
-                    styles.row,
-                    {
-                      gap: 8,
-                      marginVertical: 14,
-                    },
-                  ]}
-                >
-                  <Switch
-                    accessibilityLabel="Use for future blocks from this app"
-                    value={asDefault}
-                    onValueChange={value => {
-                      setDefault(value);
-                      setSaved(false);
-                    }}
-                  />
-                  <Text
-                    style={[
-                      styles.small,
-                      {
-                        color: c.muted,
-                        flexShrink: 1,
-                      },
-                    ]}
-                  >
-                    Use for future blocks from this app
-                  </Text>
-                </View>
-                <Button
-                  label="Save category"
-                  kind="primary"
-                  disabled={
-                    busy ||
-                    categoryID === undefined
-                  }
-                  onPress={async () => {
-                    if (
-                      categoryID !== undefined &&
-                      (await run(() =>
-                        tracker!.assignCategory(
-                          selected.id,
-                          categoryID,
-                          asDefault,
-                        ),
-                      ))
-                    ) {
-                      setSaved(true);
-                    }
-                  }}
-                />
-                {saved && (
-                  <Text
-                    accessibilityLiveRegion="polite"
-                    style={[
-                      styles.small,
-                      {
-                        color: c.accent,
-                        marginTop: 8,
-                      },
-                    ]}
-                  >
-                    Category saved.
-                  </Text>
-                )}
-              </>
-            )
-              : (
-              <Text
-                style={[
-                  styles.small,
-                  {
-                    color: c.muted,
-                    marginTop: 13,
-                  },
-                ]}
-              >
-                Select an activity block to assign a category.
-              </Text>
-            )}
-          </Panel>
+              );
+            })
+            : data.activities.map(activity => renderActivity(activity, false))}
         </ScrollView>
+        {saved && (
+          <Text
+            accessibilityLiveRegion="polite"
+            style={[
+              styles.small,
+              {
+                color: c.accent,
+                marginTop: 8,
+              },
+            ]}
+          >
+            {saved}
+          </Text>
+        )}
+      </Panel>
+    </View>
+  );
+}
+
+function JournalRow({
+  label,
+  detail,
+  a11y,
+  category,
+  categoryID,
+  seconds,
+  selected,
+  onPress,
+}: {
+  label: string;
+  detail?: string;
+  a11y: string;
+  category?: string;
+  categoryID?: number;
+  seconds: number;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  const c = usePalette();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={a11y}
+      accessibilityState={{
+        selected,
+      }}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.between,
+        layout.activity,
+        {
+          backgroundColor:
+            pressed ||
+            selected
+              ? c.accentSoft
+              : c.card,
+          borderBottomColor: c.border,
+        },
+      ]}
+    >
+      <View style={layout.journalRowTitle}>
+        <Text
+          numberOfLines={1}
+          style={[
+            layout.journalRowLabel,
+            {
+              color: c.ink,
+            },
+          ]}
+        >
+          {label}
+        </Text>
+        {detail && (
+          <Text
+            style={[
+              styles.small,
+              {
+                color: c.muted,
+              },
+            ]}
+          >
+            {detail}
+          </Text>
+        )}
+      </View>
+      <View style={layout.journalRowCategory}>
+        {categoryID !== undefined && (
+          <Dot
+            color={categoryColor(c, categoryID)}
+            size={6}
+          />
+        )}
+        <Text
+          numberOfLines={1}
+          style={[
+            styles.small,
+            layout.shrink,
+            {
+              color: c.muted,
+            },
+          ]}
+        >
+          {category}
+        </Text>
+      </View>
+      <Text
+        style={[
+          styles.numbers,
+          layout.journalDuration,
+          {
+            color: c.ink,
+          },
+        ]}
+      >
+        {duration(seconds)}
+      </Text>
+    </Pressable>
+  );
+}
+
+function JournalCategoryEditor({
+  appName,
+  activities,
+  initialCategoryID,
+  categories,
+  range,
+  forGroup,
+  busy,
+  run,
+  onCancel,
+  onSave,
+}: {
+  appName: string;
+  activities: Activity[];
+  initialCategoryID?: number;
+  categories: Category[];
+  range: Range;
+  forGroup: boolean;
+  busy: boolean;
+  run: Action;
+  onCancel: () => void;
+  onSave: (categoryName: string) => void;
+}) {
+  const c = usePalette();
+  const [categoryID, setCategoryID] = useState(initialCategoryID);
+  const [asDefault, setDefault] = useState(false);
+  const first = activities[0];
+  const count = activities.length;
+  const category = categories.find(item => item.id === categoryID);
+  const entryLabel =
+    count === 1
+      ? 'entry'
+      : 'entries';
+  const editingMixedGroup =
+    forGroup &&
+    initialCategoryID === undefined;
+  const crossesDay = activities.some(activity =>
+    activity.start < range.from ||
+    activity.end > range.to,
+  );
+  return (
+    <View
+      style={[
+        layout.journalEditor,
+        {
+          backgroundColor: c.panel,
+        },
+      ]}
+    >
+      <Text
+        style={[
+          styles.section,
+          {
+            color: c.ink,
+          },
+        ]}
+      >
+        {forGroup
+          ? `${appName} · ${count} ${entryLabel} for this day`
+          : `${appName} · ${timeLabel(Math.max(first.start, range.from))} · 1 entry`}
+      </Text>
+      {editingMixedGroup && (
+        <Text
+          style={[
+            styles.small,
+            {
+              color: c.muted,
+            },
+          ]}
+        >
+          Applying a category replaces the individual categories in this group.
+        </Text>
+      )}
+      {crossesDay && (
+        <Text
+          style={[
+            styles.small,
+            {
+              color: c.muted,
+            },
+          ]}
+        >
+          Changes apply to whole blocks, including any time outside this day.
+        </Text>
+      )}
+      <View style={layout.journalControls}>
+        {categories.map(item => (
+          <Button
+            key={item.id}
+            label={item.name}
+            selected={item.id === categoryID}
+            disabled={busy}
+            onPress={() => setCategoryID(item.id)}
+          />
+        ))}
+      </View>
+      <View style={layout.journalControls}>
+        <Switch
+          accessibilityLabel="Use for future blocks from this app"
+          value={asDefault}
+          disabled={busy}
+          onValueChange={setDefault}
+        />
+        <Text
+          style={[
+            styles.small,
+            layout.shrink,
+            {
+              color: c.muted,
+            },
+          ]}
+        >
+          Use for future blocks from this app
+        </Text>
+      </View>
+      <View style={layout.journalControls}>
+        <Button
+          label={
+            forGroup &&
+            count > 1
+              ? `Apply to all ${count} entries`
+              : 'Apply to this entry'
+          }
+          kind="primary"
+          disabled={
+            busy ||
+            category === undefined
+          }
+          onPress={async () => {
+            if (!category) {
+              return;
+            }
+            const applied = await run(() =>
+              forGroup
+                ? tracker!.assignGroupCategory(
+                    activities.map(activity => activity.id),
+                    category.id,
+                    asDefault,
+                  )
+                : tracker!.assignCategory(first.id, category.id, asDefault),
+            );
+            if (applied) {
+              onSave(category.name);
+            }
+          }}
+        />
+        <Button
+          label="Cancel"
+          disabled={busy}
+          onPress={onCancel}
+        />
       </View>
     </View>
   );
@@ -1797,24 +2019,58 @@ const layout = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'stretch',
   },
-  journalColumns: {
-    flex: 1,
-    flexDirection: 'row',
-    minHeight: 0,
-    gap: 15,
-  },
   activityPanel: {
-    flex: 1.6,
-    minHeight: 0,
-  },
-  categoryPanel: {
     flex: 1,
     minHeight: 0,
+    gap: 8,
+  },
+  journalControls: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 6,
+  },
+  categoryCreation: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    maxWidth: 420,
+  },
+  disclosure: {
+    width: 33,
+    paddingHorizontal: 0,
+  },
+  journalEntries: {
+    marginLeft: 16,
+    paddingLeft: 20,
+    borderLeftWidth: StyleSheet.hairlineWidth,
+  },
+  journalRowTitle: {
+    flex: 1,
     minWidth: 0,
   },
-  stackedCategoryPanel: {
-    flex: 0,
-    maxHeight: '55%',
+  journalRowLabel: {
+    fontWeight: '600',
+  },
+  shrink: {
+    flexShrink: 1,
+  },
+  journalRowCategory: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    maxWidth: '38%',
+    gap: 6,
+  },
+  journalDuration: {
+    minWidth: 48,
+    textAlign: 'right',
+  },
+  journalEditor: {
+    padding: 12,
+    marginVertical: 6,
+    borderRadius: 8,
+    gap: 8,
   },
   timerPanel: {
     alignItems: 'center',
@@ -1874,6 +2130,8 @@ const layout = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   activity: {
+    flex: 1,
+    minWidth: 0,
     minHeight: 49,
     marginTop: 4,
     borderRadius: 7,

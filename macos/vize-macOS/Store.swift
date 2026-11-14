@@ -198,12 +198,27 @@ final class Store {
     }
 
     func assignCategory(activityID: Int64, categoryID: Int64, saveDefault: Bool) throws {
+        try assignCategory(activityIDs: [activityID], categoryID: categoryID, saveDefault: saveDefault)
+    }
+
+    func assignCategory(activityIDs: [Int64], categoryID: Int64, saveDefault: Bool) throws {
+        guard let firstID = activityIDs.first else {
+            throw StoreError.invalid("Select at least one activity block.")
+        }
         try transaction {
-            let apps = try read("SELECT app_id FROM activity WHERE id = ?", [.integer(activityID)]) { text($0, 0) }
+            let apps = try read("SELECT app_id FROM activity WHERE id = ?", [.integer(firstID)]) { text($0, 0) }
             guard let appID = apps.first else {
                 throw StoreError.invalid("This activity block is unavailable.")
             }
-            try run("UPDATE activity SET category_id = ? WHERE id = ?", [.integer(categoryID), .integer(activityID)])
+            for id in activityIDs {
+                try run(
+                    "UPDATE activity SET category_id = ? WHERE id = ? AND app_id = ?",
+                    [.integer(categoryID), .integer(id), .text(appID)]
+                )
+                guard sqlite3_changes(db) == 1 else {
+                    throw StoreError.invalid("An activity block is unavailable for this app.")
+                }
+            }
             if saveDefault {
                 try run("""
                     INSERT INTO app_defaults (app_id, category_id) VALUES (?, ?)
