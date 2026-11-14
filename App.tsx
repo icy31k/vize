@@ -232,9 +232,9 @@ function Desktop() {
       <View
         style={[
           layout.root,
+          layout.unavailable,
           {
             backgroundColor: c.page,
-            padding: 28,
           },
         ]}
       >
@@ -282,9 +282,7 @@ function Desktop() {
         <View
           style={[
             styles.row,
-            {
-              gap: 10,
-            },
+            layout.brandRow,
           ]}
         >
           <View
@@ -318,9 +316,7 @@ function Desktop() {
         <View
           style={[
             styles.row,
-            {
-              gap: 4,
-            },
+            layout.tabControls,
           ]}
           accessibilityRole="tablist"
         >
@@ -337,9 +333,7 @@ function Desktop() {
         <View
           style={[
             styles.row,
-            {
-              gap: 7,
-            },
+            layout.captureControls,
           ]}
         >
           <Dot
@@ -378,10 +372,12 @@ function Desktop() {
         >
           <Text
             accessibilityRole="alert"
-            style={{
-              color: c.warning,
-              flex: 1,
-            }}
+            style={[
+              layout.root,
+              {
+                color: c.warning,
+              },
+            ]}
           >
             {error ||
               status?.error}
@@ -452,9 +448,7 @@ function Desktop() {
           <View
             style={[
               styles.row,
-              {
-                gap: 10,
-              },
+              layout.footerTimer,
             ]}
           >
             <Text
@@ -472,10 +466,9 @@ function Desktop() {
             <Text
               style={[
                 styles.numbers,
+                layout.footerCountdown,
                 {
                   color: c.ink,
-                  fontWeight: '700',
-                  fontSize: 16,
                 },
               ]}
             >
@@ -513,19 +506,16 @@ function Title({
       style={[
         styles.between,
         styles.wrap,
-        {
-          marginBottom: 18,
-        },
+        layout.title,
       ]}
     >
       <View>
         <Text
           style={[
             styles.small,
+            layout.titleDate,
             {
               color: c.muted,
-              fontWeight: '600',
-              marginBottom: 3,
             },
           ]}
         >
@@ -602,17 +592,13 @@ function FocusDesk({
             {
               backgroundColor: c.darkPanel,
             },
-            !narrow && {
-              flex: 1.08,
-            },
+            !narrow && layout.wideTimerPanel,
           ]}
         >
           <View
             style={[
               styles.row,
-              {
-                gap: 7,
-              },
+              layout.timerPhaseControls,
             ]}
           >
             <Button
@@ -663,9 +649,7 @@ function FocusDesk({
           <View
             style={[
               styles.row,
-              {
-                gap: 8,
-              },
+              layout.timerControls,
             ]}
           >
             <Button
@@ -709,10 +693,7 @@ function FocusDesk({
               style={[
                 styles.row,
                 styles.wrap,
-                {
-                  gap: 8,
-                  justifyContent: 'center',
-                },
+                layout.durationEditor,
               ]}
             >
               <Text
@@ -787,9 +768,7 @@ function FocusDesk({
         <Panel
           style={
             !narrow
-              ? {
-              flex: 1,
-            }
+              ? layout.root
               : undefined
           }
         >
@@ -836,19 +815,18 @@ function FocusDesk({
               ]}
             >
               <Text
-                style={{
-                  color: c.accent,
-                  fontSize: 18,
-                  fontWeight: '700',
-                }}
+                style={[
+                  layout.appGlyphLabel,
+                  {
+                    color: c.accent,
+                  },
+                ]}
               >
                 {status?.foreground?.name.slice(0, 1) ?? '–'}
               </Text>
             </View>
             <View
-              style={{
-                flex: 1,
-              }}
+              style={layout.root}
             >
               <Text
                 style={[
@@ -862,11 +840,12 @@ function FocusDesk({
               </Text>
               <Text
                 numberOfLines={1}
-                style={{
-                  color: c.ink,
-                  fontSize: 16,
-                  fontWeight: '600',
-                }}
+                style={[
+                  layout.foregroundName,
+                  {
+                    color: c.ink,
+                  },
+                ]}
               >
                 {status?.foreground?.name ??
                   (status?.captureEnabled
@@ -878,9 +857,9 @@ function FocusDesk({
           <Text
             style={[
               styles.section,
+              layout.categoryHeading,
               {
                 color: c.ink,
-                marginBottom: 12,
               },
             ]}
           >
@@ -901,11 +880,13 @@ function FocusDesk({
                 .map(category => (
                   <View
                     key={category.id}
-                    style={{
-                      height: 9,
-                      flex: totals.categories.get(category.id),
-                      backgroundColor: categoryColor(c, category.id),
-                    }}
+                    style={[
+                      layout.allocationSegment,
+                      {
+                        flex: totals.categories.get(category.id),
+                        backgroundColor: categoryColor(c, category.id),
+                      },
+                    ]}
                   />
                 ))}
             </View>
@@ -921,9 +902,9 @@ function FocusDesk({
             <Text
               style={[
                 styles.small,
+                layout.statusMessage,
                 {
                   color: c.muted,
-                  marginTop: 8,
                 },
               ]}
             >
@@ -959,10 +940,7 @@ function CategoryRow({
       <View
         style={[
           styles.row,
-          {
-            gap: 8,
-            flex: 1,
-          },
+          layout.categoryRowLabel,
         ]}
       >
         <Dot
@@ -970,10 +948,12 @@ function CategoryRow({
         />
         <Text
           numberOfLines={1}
-          style={{
-            color: c.ink,
-            flexShrink: 1,
-          }}
+          style={[
+            layout.shrink,
+            {
+              color: c.ink,
+            },
+          ]}
         >
           {category.name}
         </Text>
@@ -1007,9 +987,7 @@ function DateNav({
     <View
       style={[
         styles.row,
-        {
-          gap: 6,
-        },
+        layout.dateControls,
       ]}
     >
       <Button
@@ -1293,9 +1271,9 @@ function Journal({
             <Text
               style={[
                 styles.small,
+                layout.emptyJournal,
                 {
                   color: c.muted,
-                  marginTop: 14,
                 },
               ]}
             >
@@ -1384,9 +1362,9 @@ function Journal({
             accessibilityLiveRegion="polite"
             style={[
               styles.small,
+              layout.statusMessage,
               {
                 color: c.accent,
-                marginTop: 8,
               },
             ]}
           >
@@ -1716,9 +1694,7 @@ function Report({
         <View
           style={[
             styles.row,
-            {
-              gap: 9,
-            },
+            layout.reviewControls,
           ]}
         >
           <DateNav
@@ -1752,9 +1728,7 @@ function Report({
         <Panel
           style={
             !narrow
-              ? {
-              flex: 1.7,
-            }
+              ? layout.wideReviewPanel
               : undefined
           }
         >
@@ -1818,13 +1792,12 @@ function Report({
                     ]}
                   >
                     <View
-                      style={{
-                        height: (122 * day.summary.total) / busiest,
-                        width: '100%',
-                        overflow: 'hidden',
-                        borderRadius: 4,
-                        flexDirection: 'column-reverse',
-                      }}
+                      style={[
+                        layout.chartStack,
+                        {
+                          height: (122 * day.summary.total) / busiest,
+                        },
+                      ]}
                     >
                       {data.categories
                         .filter(category =>
@@ -1833,15 +1806,15 @@ function Report({
                         .map(category => (
                           <View
                             key={category.id}
-                            style={{
-                              flex: day.summary.categories.get(category.id),
-                              backgroundColor: categoryColor(c, category.id),
-                              opacity:
-                                active &&
-                                active.id !== category.id
-                                  ? 0.5
-                                  : 1,
-                            }}
+                            style={[
+                              active &&
+                              active.id !== category.id &&
+                                layout.inactiveChartSegment,
+                              {
+                                flex: day.summary.categories.get(category.id),
+                                backgroundColor: categoryColor(c, category.id),
+                              },
+                            ]}
                           />
                         ))}
                     </View>
@@ -1864,10 +1837,7 @@ function Report({
             style={[
               styles.row,
               styles.wrap,
-              {
-                gap: 6,
-                marginTop: 12,
-              },
+              layout.reviewCategories,
             ]}
           >
             {data.categories.map(category => (
@@ -1885,18 +1855,16 @@ function Report({
         <Panel
           style={
             !narrow
-              ? {
-              flex: 1,
-            }
+              ? layout.root
               : undefined
           }
         >
           <Text
             style={[
               styles.small,
+              layout.reviewCategoryHeading,
               {
                 color: c.muted,
-                marginBottom: 5,
               },
             ]}
           >
@@ -1916,10 +1884,9 @@ function Report({
             <Text
               style={[
                 styles.small,
+                layout.reviewCategoryTotal,
                 {
                   color: c.muted,
-                  marginTop: 4,
-                  marginBottom: 8,
                 },
               ]}
             >
@@ -1939,10 +1906,12 @@ function Report({
             >
               <Text
                 numberOfLines={1}
-                style={{
-                  color: c.ink,
-                  flexShrink: 1,
-                }}
+                style={[
+                  layout.shrink,
+                  {
+                    color: c.ink,
+                  },
+                ]}
               >
                 {app.name}
               </Text>
@@ -1962,9 +1931,9 @@ function Report({
             <Text
               style={[
                 styles.small,
+                layout.emptyReview,
                 {
                   color: c.muted,
-                  marginTop: 12,
                 },
               ]}
             >
@@ -1981,15 +1950,27 @@ const layout = StyleSheet.create({
   root: {
     flex: 1,
   },
+  unavailable: {
+    padding: 28,
+  },
   header: {
     paddingHorizontal: 21,
     paddingVertical: 11,
     borderBottomWidth: 1,
   },
+  tabControls: {
+    gap: 4,
+  },
+  captureControls: {
+    gap: 7,
+  },
   brand: {
     fontSize: 20,
     fontWeight: '800',
     letterSpacing: -0.65,
+  },
+  brandRow: {
+    gap: 10,
   },
   brandMark: {
     width: 29,
@@ -2014,6 +1995,16 @@ const layout = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 22,
   },
+  title: {
+    marginBottom: 18,
+  },
+  titleDate: {
+    fontWeight: '600',
+    marginBottom: 3,
+  },
+  dateControls: {
+    gap: 6,
+  },
   columns: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -2027,6 +2018,12 @@ const layout = StyleSheet.create({
     flex: 1,
     minHeight: 0,
     gap: 8,
+  },
+  emptyJournal: {
+    marginTop: 14,
+  },
+  statusMessage: {
+    marginTop: 8,
   },
   journalControls: {
     flexDirection: 'row',
@@ -2082,6 +2079,19 @@ const layout = StyleSheet.create({
     padding: 21,
     borderRadius: 16,
   },
+  wideTimerPanel: {
+    flex: 1.08,
+  },
+  timerPhaseControls: {
+    gap: 7,
+  },
+  timerControls: {
+    gap: 8,
+  },
+  durationEditor: {
+    gap: 8,
+    justifyContent: 'center',
+  },
   dial: {
     width: 190,
     height: 190,
@@ -2109,12 +2119,20 @@ const layout = StyleSheet.create({
     marginVertical: 17,
     gap: 10,
   },
+  foregroundName: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
   appGlyph: {
     width: 38,
     height: 38,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 9,
+  },
+  appGlyphLabel: {
+    fontSize: 18,
+    fontWeight: '700',
   },
   minuteField: {
     width: 50,
@@ -2128,6 +2146,16 @@ const layout = StyleSheet.create({
     gap: 2,
     overflow: 'hidden',
     marginBottom: 4,
+  },
+  categoryHeading: {
+    marginBottom: 12,
+  },
+  allocationSegment: {
+    height: 9,
+  },
+  categoryRowLabel: {
+    gap: 8,
+    flex: 1,
   },
   line: {
     paddingVertical: 9,
@@ -2148,6 +2176,13 @@ const layout = StyleSheet.create({
     paddingVertical: 8,
     borderTopWidth: 1,
   },
+  footerTimer: {
+    gap: 10,
+  },
+  footerCountdown: {
+    fontWeight: '700',
+    fontSize: 16,
+  },
   chart: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -2155,6 +2190,26 @@ const layout = StyleSheet.create({
     paddingBottom: 9,
     gap: 5,
     borderBottomWidth: 1,
+  },
+  reviewControls: {
+    gap: 9,
+  },
+  wideReviewPanel: {
+    flex: 1.7,
+  },
+  reviewCategories: {
+    gap: 6,
+    marginTop: 12,
+  },
+  reviewCategoryHeading: {
+    marginBottom: 5,
+  },
+  reviewCategoryTotal: {
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  emptyReview: {
+    marginTop: 12,
   },
   chartColumn: {
     alignItems: 'center',
@@ -2169,5 +2224,14 @@ const layout = StyleSheet.create({
     borderRadius: 4,
     justifyContent: 'flex-end',
     overflow: 'hidden',
+  },
+  chartStack: {
+    width: '100%',
+    overflow: 'hidden',
+    borderRadius: 4,
+    flexDirection: 'column-reverse',
+  },
+  inactiveChartSegment: {
+    opacity: 0.5,
   },
 });
