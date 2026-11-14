@@ -3,6 +3,8 @@ import Foundation
 @main
 enum NativeChecks {
     static func main() throws {
+        checkForegroundIdentity()
+
         var capture = CapturePolicy()
         precondition(!capture.allowsCapture(idle: 0))
         capture.enabled = true
@@ -59,5 +61,46 @@ enum NativeChecks {
         let completed = try reopened.pomodoros(from: 1_000, to: 1_100)
         precondition(completed == 1)
         print("Capture boundaries, SQLite persistence, future app defaults, pause/resume, and timer completion verified.")
+    }
+
+    private static func checkForegroundIdentity() {
+        let executable = "wine64-preloader"
+        var argumentCount: Int32 = 3
+        var arguments = withUnsafeBytes(of: &argumentCount) { Data($0) }
+        arguments.append(contentsOf: "/usr/local/bin/wine64-preloader\0\0wine64\0--\0C:\\Games\\Skyrim Special Edition\\SkyrimSE.exe\0OTHER=Ignored.exe\0".utf8)
+        let windowsProgram = ForegroundApp.windowsProgram(in: arguments)
+        precondition(windowsProgram == "SkyrimSE.exe")
+
+        let game = ForegroundApp(
+            bundleID: nil,
+            localizedName: executable,
+            executable: executable,
+            wineProgram: windowsProgram
+        )
+        precondition(game?.id == "wine:skyrimse.exe")
+        precondition(game?.name == "SkyrimSE")
+
+        let unbundled = ForegroundApp(
+            bundleID: nil,
+            localizedName: nil,
+            executable: "Editor",
+            wineProgram: nil
+        )
+        precondition(unbundled?.id == "process:editor")
+        precondition(unbundled?.name == "Editor")
+
+        let bundled = ForegroundApp(
+            bundleID: "com.apple.finder",
+            localizedName: "Finder",
+            executable: "Finder",
+            wineProgram: nil
+        )
+        precondition(bundled?.id == "com.apple.finder")
+
+        argumentCount = 2
+        withUnsafeBytes(of: &argumentCount) { arguments.replaceSubrange(0..<MemoryLayout<Int32>.size, with: $0) }
+        precondition(ForegroundApp.windowsProgram(in: arguments) == nil)
+        precondition(ForegroundApp.windowsProgram(in: Data()) == nil)
+        print("Bundled, unbundled, and Wine foreground identities verified.")
     }
 }

@@ -2,24 +2,6 @@ import AppKit
 import CoreGraphics
 import Foundation
 
-private struct ForegroundApp: Equatable {
-    let id: String
-    let name: String
-
-    init?(_ app: NSRunningApplication?) {
-        guard let app,
-              let id = app.bundleIdentifier,
-              let name = app.localizedName
-        else {
-            return nil
-        }
-        self.id = id
-        self.name = name
-    }
-
-    var payload: [String: Any] { ["id": id, "name": name] }
-}
-
 final class VizeService {
     static let shared = VizeService()
     static let changed = Notification.Name("VizeServiceChanged")
@@ -29,6 +11,7 @@ final class VizeService {
     private var timer = TimerState()
     private var capture = CapturePolicy()
     private var foreground: ForegroundApp?
+    private var foregroundProcess: NSRunningApplication?
     private var activity: Activity?
     private var monitor: Timer?
     private var observations: [(NotificationCenter, NSObjectProtocol)] = []
@@ -130,9 +113,14 @@ final class VizeService {
         let timerWasRunning = timer.deadline != nil
         let idleSeconds = CGEventSource.secondsSinceLastEventType(.combinedSessionState,
                                                                   eventType: Self.allInputEvents)
-        foreground = capture.sessionAvailable
-            ? ForegroundApp(activation ?? NSWorkspace.shared.frontmostApplication)
+        let currentProcess = capture.sessionAvailable
+            && capture.enabled
+            ? (activation ?? NSWorkspace.shared.frontmostApplication)
             : nil
+        if currentProcess != foregroundProcess {
+            foregroundProcess = currentProcess
+            foreground = currentProcess.flatMap(ForegroundApp.init)
+        }
         if let store {
             do {
                 if unexpectedGap

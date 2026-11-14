@@ -18,6 +18,7 @@
 		E20000000000000000000004 /* VizeBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000004 /* VizeBridge.swift */; };
 		E20000000000000000000005 /* VizeBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000005 /* VizeBridge.m */; };
 		E20000000000000000000006 /* CapturePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000006 /* CapturePolicy.swift */; };
+		E20000000000000000000007 /* ForegroundApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000007 /* ForegroundApp.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -37,6 +38,7 @@
 		E10000000000000000000005 /* VizeBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VizeBridge.m; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		E10000000000000000000006 /* CapturePolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapturePolicy.swift; sourceTree = "<group>"; };
+		E10000000000000000000007 /* ForegroundApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForegroundApp.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -72,6 +74,7 @@
 			children = (
 				5142014C2437B4B30078DB4F /* AppDelegate.swift */,
 				E10000000000000000000005 /* VizeBridge.m */,
+				E10000000000000000000007 /* ForegroundApp.swift */,
 				E10000000000000000000006 /* CapturePolicy.swift */,
 				E10000000000000000000004 /* VizeBridge.swift */,
 				E10000000000000000000003 /* VizeService.swift */,
@@ -336,6 +339,7 @@
 			files = (
 				5142014D2437B4B30078DB4F /* AppDelegate.swift in Sources */,
 				E20000000000000000000005 /* VizeBridge.m in Sources */,
+				E20000000000000000000007 /* ForegroundApp.swift in Sources */,
 				E20000000000000000000006 /* CapturePolicy.swift in Sources */,
 				E20000000000000000000004 /* VizeBridge.swift in Sources */,
 				E20000000000000000000003 /* VizeService.swift in Sources */,
