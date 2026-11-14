@@ -8,3 +8,4 @@
 
 - Put each named import and each JSX prop on its own line. Put each style property and each style array entry on its own line.
 - Put each clause of a compound condition and each ternary branch on its own line. Use multiline blocks for conditional statements, including guard clauses.
+- Extract compound conditions and derived values into descriptive variables before using them in JSX or styles. Keep ternaries to simple two-way choices. Use `if`/`else if` or `switch` when there are multiple cases.

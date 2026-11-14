@@ -101,9 +101,34 @@ export function Button({
 }) {
   const c = usePalette();
   const filled = kind === 'primary';
-  const inverse = kind === 'inverse';
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
+  const highlighted =
+    hovered ||
+    selected;
+  const hidesBorder =
+    filled ||
+    kind === 'quiet';
+
+  let backgroundColor = c.card;
+  let labelColor = c.ink;
+  if (filled) {
+    backgroundColor = c.accent;
+    labelColor = c.actionText;
+  } else if (kind === 'inverse') {
+    backgroundColor = c.inverse;
+    labelColor = light.ink;
+  } else if (highlighted) {
+    backgroundColor = c.accentSoft;
+  }
+
+  let borderColor = c.border;
+  if (focused) {
+    borderColor = c.accent;
+  } else if (hidesBorder) {
+    borderColor = 'transparent';
+  }
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -119,41 +144,30 @@ export function Button({
       onHoverOut={() => setHovered(false)}
       onFocus={() => setFocused(true)}
       onBlur={() => setFocused(false)}
-      style={({ pressed }) => [
-        styles.button,
-        {
-          backgroundColor: filled
-            ? c.accent
-            : inverse
-            ? c.inverse
-            : hovered ||
-            selected
-            ? c.accentSoft
-            : c.card,
-          borderColor: focused
-            ? c.accent
-            : filled ||
-            kind === 'quiet'
-            ? 'transparent'
-            : c.border,
-          opacity: disabled
-            ? 0.44
-            : pressed
-            ? 0.78
-            : 1,
-        },
-        style,
-      ]}
+      style={({ pressed }) => {
+        let opacity = 1;
+        if (disabled) {
+          opacity = 0.44;
+        } else if (pressed) {
+          opacity = 0.78;
+        }
+
+        return [
+          styles.button,
+          {
+            backgroundColor,
+            borderColor,
+            opacity,
+          },
+          style,
+        ];
+      }}
     >
       <Text
         style={[
           styles.buttonText,
           {
-            color: filled
-              ? c.actionText
-              : inverse
-              ? '#233229'
-              : c.ink,
+            color: labelColor,
           },
         ]}
       >
