@@ -14,7 +14,7 @@ Vize runs offline and stores its database in Application Support. The database i
 
 ### Activity Journal
 
-![Vize Activity Journal with a selected app block and its category controls](docs/screenshots/activity-journal.jpg)
+![Vize Activity Journal grouped by app and sorted by total time, with Safari expanded to show entries in different categories](docs/screenshots/activity-journal.jpg)
 
 ### Weekly Review
 
