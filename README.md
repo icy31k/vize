@@ -6,6 +6,20 @@ Enable capture in the window or menu bar to begin. Vize stores foreground applic
 
 Vize runs offline and stores its database in Application Support. The database is at `~/Library/Application Support/Vize/activity.sqlite3`.
 
+## Screenshots
+
+### Focus Desk
+
+![Vize Focus Desk with the Pomodoro timer and today's activity by category](docs/screenshots/focus-desk.jpg)
+
+### Activity Journal
+
+![Vize Activity Journal with a selected app block and its category controls](docs/screenshots/activity-journal.jpg)
+
+### Weekly Review
+
+![Vize Weekly Review with daily activity totals and an app breakdown for the selected category](docs/screenshots/weekly-review.jpg)
+
 ## Build on macOS
 
 Use macOS 14 or later, Xcode 26.6 (verified toolchain), Node 22.18.0, npm, and CocoaPods 1.17.0. The first dependency installation requires network access.
