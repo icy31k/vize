@@ -1087,6 +1087,10 @@ function Journal({
     group.categories.add(activity.categoryID);
   }
 
+  const groupsByDuration = Array.from(groups.values()).sort(
+    (a, b) => b.seconds - a.seconds,
+  );
+
   const choose = (key: string) => {
     setSelection(previous =>
       previous === key
@@ -1299,7 +1303,7 @@ function Journal({
             </Text>
           )}
           {view === 'grouped'
-            ? Array.from(groups.values(), group => {
+            ? groupsByDuration.map(group => {
               const key = `app:${group.appID}`;
               const open = expanded.has(group.appID);
               const count = group.activities.length;
