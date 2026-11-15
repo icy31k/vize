@@ -39,6 +39,8 @@
 	</dict>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>VizeAPIBaseURL</key>
+	<string>$(VIZE_API_BASE_URL)</string>
 	<key>NSSupportsAutomaticTermination</key>
 	<false/>
 	<key>NSSupportsSuddenTermination</key>

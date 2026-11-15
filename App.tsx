@@ -15,6 +15,10 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import {
+  AccountMenu,
+  useToolbarAccount,
+} from './src/account';
+import {
   tracker,
   trackerEvents,
 } from './src/native';
@@ -83,6 +87,7 @@ export default function App() {
 function Desktop() {
   const c = usePalette();
   const { width } = useWindowDimensions();
+  const account = useToolbarAccount();
   const [tab, setTab] = useState<Tab>('Focus Desk');
   const [today, setToday] = useState(() => dayStart(new Date()));
   const [journalDay, setJournalDay] = useState(() => dayStart(new Date()));
@@ -125,6 +130,9 @@ function Desktop() {
       : emptyHistory;
   const timer = status?.timer ?? emptyTimer;
   const narrow = width < 880;
+  const accountLabel = account.profile
+    ? 'Account'
+    : 'Guest';
 
   useEffect(() => {
     mounted.current = true;
@@ -357,82 +365,99 @@ function Desktop() {
               run(() => tracker!.setCapture(!status?.captureEnabled))
             }
           />
+          <Button
+            label={accountLabel}
+            showChevron
+            expanded={account.open}
+            selected={account.open}
+            disabled={account.busy}
+            onPress={account.toggle}
+          />
         </View>
       </View>
-      {(error ||
-      status?.error) && (
-        <View
-          style={[
-            styles.between,
-            layout.alert,
-            {
-              borderBottomColor: c.border,
-            },
-          ]}
-        >
-          <Text
-            accessibilityRole="alert"
+      <View style={layout.root}>
+        {(error ||
+        status?.error) && (
+          <View
             style={[
-              layout.root,
+              styles.between,
+              layout.alert,
               {
-                color: c.warning,
+                borderBottomColor: c.border,
               },
             ]}
           >
-            {error ||
-              status?.error}
-          </Text>
-          {error && (
-            <Button
-              label="Dismiss"
-              kind="quiet"
-              onPress={() => setError(undefined)}
-            />
-          )}
-        </View>
-      )}
-      {tab === 'Activity Journal'
-        ? (
-          <Journal
-            date={journalDay}
-            today={today}
-            setDate={setJournalDay}
-            data={data}
-            busy={busy}
-            run={run}
-          />
-        )
-        : (
-          <ScrollView
-            style={layout.root}
-            contentContainerStyle={layout.scroll}
-            keyboardShouldPersistTaps="handled"
-          >
-            {tab === 'Focus Desk'
-              ? (
-                <FocusDesk
-                  today={today}
-                  status={status}
-                  data={data}
-                  busy={busy}
-                  ready={ready}
-                  narrow={narrow}
-                  run={run}
-                />
-              )
-              : (
-                <Report
-                  date={reportDay}
-                  today={today}
-                  setDate={setReportDay}
-                  mode={mode}
-                  setMode={setMode}
-                  data={data}
-                  narrow={narrow}
-                />
-              )}
-          </ScrollView>
+            <Text
+              accessibilityRole="alert"
+              style={[
+                layout.root,
+                {
+                  color: c.warning,
+                },
+              ]}
+            >
+              {error ||
+                status?.error}
+            </Text>
+            {error && (
+              <Button
+                label="Dismiss"
+                kind="quiet"
+                onPress={() => setError(undefined)}
+              />
+            )}
+          </View>
         )}
+        {tab === 'Activity Journal'
+          ? (
+            <Journal
+              date={journalDay}
+              today={today}
+              setDate={setJournalDay}
+              data={data}
+              busy={busy}
+              run={run}
+            />
+          )
+          : (
+            <ScrollView
+              style={layout.root}
+              contentContainerStyle={layout.scroll}
+              keyboardShouldPersistTaps="handled"
+            >
+              {tab === 'Focus Desk'
+                ? (
+                  <FocusDesk
+                    today={today}
+                    status={status}
+                    data={data}
+                    busy={busy}
+                    ready={ready}
+                    narrow={narrow}
+                    run={run}
+                  />
+                )
+                : (
+                  <Report
+                    date={reportDay}
+                    today={today}
+                    setDate={setReportDay}
+                    mode={mode}
+                    setMode={setMode}
+                    data={data}
+                    narrow={narrow}
+                  />
+                )}
+            </ScrollView>
+          )}
+        {account.open && (
+          <View style={layout.accountOverlay}>
+            <AccountMenu
+              account={account}
+            />
+          </View>
+        )}
+      </View>
       {tab !== 'Focus Desk' && (
         <View
           style={[
@@ -1963,6 +1988,13 @@ const layout = StyleSheet.create({
     paddingHorizontal: 21,
     paddingVertical: 11,
     borderBottomWidth: 1,
+  },
+  accountOverlay: {
+    position: 'absolute',
+    top: 6,
+    right: 21,
+    width: 330,
+    zIndex: 2,
   },
   tabControls: {
     gap: 4,

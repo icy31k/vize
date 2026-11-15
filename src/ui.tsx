@@ -1,6 +1,7 @@
 import React, {
   createContext,
   useContext,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -10,10 +11,13 @@ import {
   Text,
   TextInput,
   View,
+  requireNativeComponent,
   useColorScheme,
 } from 'react-native';
 import type {
+  NativeSyntheticEvent,
   TextInputProps,
+  ViewProps,
   ViewStyle,
 } from 'react-native';
 
@@ -86,6 +90,7 @@ export function Button({
   kind = 'plain',
   selected,
   expanded,
+  showChevron,
   disabled,
   a11y,
   style,
@@ -95,6 +100,7 @@ export function Button({
   kind?: 'plain' | 'primary' | 'inverse' | 'quiet';
   selected?: boolean;
   expanded?: boolean;
+  showChevron?: boolean;
   disabled?: boolean;
   a11y?: string;
   style?: ViewStyle;
@@ -129,6 +135,10 @@ export function Button({
     borderColor = 'transparent';
   }
 
+  const chevronColor = {
+    borderColor: labelColor,
+  };
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -154,6 +164,7 @@ export function Button({
 
         return [
           styles.button,
+          showChevron && styles.buttonWithChevron,
           {
             backgroundColor,
             borderColor,
@@ -173,40 +184,107 @@ export function Button({
       >
         {label}
       </Text>
+      {showChevron && (
+        <View
+          accessible={false}
+          style={styles.buttonChevron}
+        >
+          <View
+            style={[
+              styles.buttonChevronStroke,
+              chevronColor,
+            ]}
+          />
+        </View>
+      )}
     </Pressable>
   );
 }
 
 type TextFieldProps = Pick<
   TextInputProps,
-  'accessibilityLabel' | 'value' | 'onChangeText' | 'maxLength' | 'placeholder'
+  | 'accessibilityLabel'
+  | 'value'
+  | 'onChangeText'
+  | 'maxLength'
+  | 'placeholder'
+  | 'secureTextEntry'
+  | 'autoCapitalize'
+  | 'autoCorrect'
 > & {
+  onSubmit?: () => void;
   style?: ViewStyle;
 };
+
+type SecureFieldProps = ViewProps & {
+  fieldLabel?: string;
+  value?: string;
+  placeholder?: string;
+  textColor: string;
+  placeholderColor: string;
+  maxLength?: number;
+  onSecureChange: (event: NativeSyntheticEvent<{ text: string }>) => void;
+  onSecureFocus: (event: NativeSyntheticEvent<{ focused: boolean }>) => void;
+  onSecureSubmit?: () => void;
+};
+
+const SecureField = requireNativeComponent<SecureFieldProps>('VizeSecureTextField');
 
 // React Native macOS supports this prop, but the upstream TextInput type omits it.
 const macOSTextInputProps = {
   enableFocusRing: false,
 };
 
-export function TextField({ style, ...props }: TextFieldProps) {
+export function TextField({
+  style,
+  secureTextEntry,
+  onSubmit,
+  ...props
+}: TextFieldProps) {
   const c = usePalette();
   const input = useRef<TextInput>(null);
   const [focused, setFocused] = useState(false);
+  const colors = useMemo(() => StyleSheet.create({
+    field: {
+      backgroundColor: c.card,
+      borderColor: focused
+        ? c.accent
+        : c.border,
+    },
+    text: {
+      color: c.ink,
+    },
+  }), [c, focused]);
+  const fieldStyle = [
+    styles.field,
+    colors.field,
+    style,
+  ];
+
+  if (secureTextEntry) {
+    return (
+      <View style={fieldStyle}>
+        <SecureField
+          style={styles.secureField}
+          fieldLabel={props.accessibilityLabel}
+          placeholder={props.placeholder}
+          value={props.value}
+          maxLength={props.maxLength}
+          textColor={c.ink}
+          placeholderColor={c.muted}
+          onSecureChange={event => props.onChangeText?.(event.nativeEvent.text)}
+          onSecureFocus={event => setFocused(event.nativeEvent.focused)}
+          onSecureSubmit={onSubmit}
+        />
+      </View>
+    );
+  }
+
   return (
     <Pressable
       accessible={false}
       onPress={() => input.current?.focus()}
-      style={[
-        styles.field,
-        {
-          backgroundColor: c.card,
-          borderColor: focused
-            ? c.accent
-            : c.border,
-        },
-        style,
-      ]}
+      style={fieldStyle}
     >
       <TextInput
         {...props}
@@ -214,12 +292,11 @@ export function TextField({ style, ...props }: TextFieldProps) {
         ref={input}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
+        onSubmitEditing={onSubmit}
         placeholderTextColor={c.muted}
         style={[
           styles.fieldText,
-          {
-            color: c.ink,
-          },
+          colors.text,
         ]}
       />
     </Pressable>
@@ -295,6 +372,31 @@ export const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
   },
+  buttonWithChevron: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  buttonChevron: {
+    width: 9,
+    height: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonChevronStroke: {
+    width: 6,
+    height: 6,
+    borderBottomWidth: 1.5,
+    borderRightWidth: 1.5,
+    transform: [
+      {
+        translateY: -2,
+      },
+      {
+        rotate: '45deg',
+      },
+    ],
+  },
   heading: {
     fontSize: 32,
     lineHeight: 39,
@@ -325,5 +427,9 @@ export const styles = StyleSheet.create({
     fontSize: 13,
     paddingVertical: 0,
     paddingHorizontal: 9,
+  },
+  secureField: {
+    alignSelf: 'stretch',
+    minHeight: 34,
   },
 });

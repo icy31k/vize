@@ -6,6 +6,8 @@ Enable capture in the window or menu bar to begin. Vize stores foreground applic
 
 Vize runs offline and stores its database in Application Support. The database is at `~/Library/Application Support/Vize/activity.sqlite3`.
 
+Use the **Guest** menu in the toolbar to sign in or create an account. Tracking and reports are available in guest mode. Activity stays on this Mac in either mode. Vize keeps the session token in macOS Keychain.
+
 ## Screenshots
 
 ### Focus Desk
@@ -33,6 +35,8 @@ open build/macos/Build/Products/Release/Vize.app
 ```
 
 The Release build bundles its JavaScript and uses local ad-hoc signing. For development, run `npm start` and use the `vize-macOS` scheme in `macos/vize.xcworkspace`.
+
+For local account testing, start the separate `vize-backend` development server on `127.0.0.1:8000`. To build against a hosted backend, run `VIZE_API_BASE_URL=https://your-api-host.example npm run build:release`. Sign-in and sign-out require the account server.
 
 ```sh
 npm run typecheck

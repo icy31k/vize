@@ -3,11 +3,14 @@ import {
   NativeModules,
 } from 'react-native';
 import type {
+  AccountPlatform,
+} from './accountClient';
+import type {
   History,
   Status,
 } from './tracker';
 
-type Bridge = {
+type Bridge = AccountPlatform & {
   status(): Promise<Status>;
   history(from: number, to: number): Promise<History>;
   setCapture(enabled: boolean): Promise<void>;

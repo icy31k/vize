@@ -15,6 +15,8 @@
 		E20000000000000000000001 /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000001 /* Store.swift */; };
 		E20000000000000000000002 /* TimerState.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000002 /* TimerState.swift */; };
 		E20000000000000000000003 /* VizeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000003 /* VizeService.swift */; };
+		E20000000000000000000061 /* VizeSecureTextField.m in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000061 /* VizeSecureTextField.m */; };
+		E20000000000000000000060 /* AccountPlatform.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000060 /* AccountPlatform.swift */; };
 		E20000000000000000000004 /* VizeBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000004 /* VizeBridge.swift */; };
 		E20000000000000000000005 /* VizeBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000005 /* VizeBridge.m */; };
 		E20000000000000000000006 /* CapturePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000006 /* CapturePolicy.swift */; };
@@ -34,6 +36,8 @@
 		E10000000000000000000001 /* Store.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Store.swift; sourceTree = "<group>"; };
 		E10000000000000000000002 /* TimerState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerState.swift; sourceTree = "<group>"; };
 		E10000000000000000000003 /* VizeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VizeService.swift; sourceTree = "<group>"; };
+		E10000000000000000000061 /* VizeSecureTextField.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VizeSecureTextField.m; sourceTree = "<group>"; };
+		E10000000000000000000060 /* AccountPlatform.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountPlatform.swift; sourceTree = "<group>"; };
 		E10000000000000000000004 /* VizeBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VizeBridge.swift; sourceTree = "<group>"; };
 		E10000000000000000000005 /* VizeBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VizeBridge.m; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
@@ -76,6 +80,8 @@
 				E10000000000000000000005 /* VizeBridge.m */,
 				E10000000000000000000007 /* ForegroundApp.swift */,
 				E10000000000000000000006 /* CapturePolicy.swift */,
+				E10000000000000000000061 /* VizeSecureTextField.m */,
+				E10000000000000000000060 /* AccountPlatform.swift */,
 				E10000000000000000000004 /* VizeBridge.swift */,
 				E10000000000000000000003 /* VizeService.swift */,
 				E10000000000000000000002 /* TimerState.swift */,
@@ -341,6 +347,8 @@
 				E20000000000000000000005 /* VizeBridge.m in Sources */,
 				E20000000000000000000007 /* ForegroundApp.swift in Sources */,
 				E20000000000000000000006 /* CapturePolicy.swift in Sources */,
+				E20000000000000000000061 /* VizeSecureTextField.m in Sources */,
+				E20000000000000000000060 /* AccountPlatform.swift in Sources */,
 				E20000000000000000000004 /* VizeBridge.swift in Sources */,
 				E20000000000000000000003 /* VizeService.swift in Sources */,
 				E20000000000000000000002 /* TimerState.swift in Sources */,

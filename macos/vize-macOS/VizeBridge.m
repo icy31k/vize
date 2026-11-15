@@ -14,4 +14,10 @@ RCT_EXTERN_METHOD(assignGroupCategory:(nonnull NSArray<NSNumber *> *)activityIDs
 RCT_EXTERN_METHOD(timerCommand:(NSString *)command resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 RCT_EXTERN_METHOD(setDurations:(nonnull NSNumber *)focus rest:(nonnull NSNumber *)rest
                   resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXTERN_METHOD(readAccountSession:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXTERN_METHOD(writeAccountSession:(nullable NSString *)value resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXTERN_METHOD(sendAccountRequest:(NSString *)path method:(NSString *)method body:(nullable NSString *)body
+                  token:(nullable NSString *)token resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
 @end

@@ -4,6 +4,7 @@ import React
 @objc(VizeBridge)
 final class VizeBridge: RCTEventEmitter {
     private var observation: NSObjectProtocol?
+    private let accountPlatform = AccountPlatform()
 
     override static func requiresMainQueueSetup() -> Bool { true }
     override var methodQueue: DispatchQueue! { .main }
@@ -81,6 +82,43 @@ final class VizeBridge: RCTEventEmitter {
         perform(resolve, reject) {
             try VizeService.shared.setDurations(focus: focus.intValue, rest: rest.intValue)
             return nil
+        }
+    }
+
+    @objc(readAccountSession:rejecter:)
+    func readAccountSession(_ resolve: RCTPromiseResolveBlock, rejecter reject: RCTPromiseRejectBlock) {
+        perform(resolve, reject) { try accountPlatform.readSession() }
+    }
+
+    @objc(writeAccountSession:resolver:rejecter:)
+    func writeAccountSession(
+        _ value: String?,
+        resolver resolve: RCTPromiseResolveBlock,
+        rejecter reject: RCTPromiseRejectBlock
+    ) {
+        perform(resolve, reject) {
+            try accountPlatform.writeSession(value)
+            return nil
+        }
+    }
+
+    @objc(sendAccountRequest:method:body:token:resolver:rejecter:)
+    func sendAccountRequest(
+        _ path: String,
+        method: String,
+        body: String?,
+        token: String?,
+        resolver resolve: @escaping RCTPromiseResolveBlock,
+        rejecter reject: @escaping RCTPromiseRejectBlock
+    ) {
+        Task { @MainActor in
+            do {
+                resolve(try await accountPlatform.send(path: path, method: method, body: body, token: token))
+            } catch AccountPlatform.Failure.unreachable {
+                reject("account-network", AccountPlatform.Failure.unreachable.localizedDescription, nil)
+            } catch {
+                reject("account", error.localizedDescription, nil)
+            }
         }
     }
 
