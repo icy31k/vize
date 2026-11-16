@@ -1714,10 +1714,15 @@ function Report({
     return { value, summary: summarize(data.activities, dayRange(value)) };
   });
   const busiest = Math.max(1, ...days.map(day => day.summary.total));
-  const selected = data.categories.find(category => category.id === categoryID);
-  const active =
-    selected ??
-    data.categories.find(category => summary.categories.has(category.id));
+  const visibleCategories = data.categories
+    .map(category => ({
+      ...category,
+      seconds: summary.categories.get(category.id) ?? 0,
+    }))
+    .filter(category => category.seconds >= 1);
+  const hasCategories = visibleCategories.length > 0;
+  const selected = visibleCategories.find(category => category.id === categoryID);
+  const active = selected ?? visibleCategories[0];
   const apps =
     active
     ? [...(summary.apps.get(active.id)?.entries() ?? [])].sort(
@@ -1880,24 +1885,24 @@ function Report({
               );
             })}
           </View>
-          <View
-            style={[
-              styles.row,
-              styles.wrap,
-              layout.reviewCategories,
-            ]}
-          >
-            {data.categories.map(category => (
-              <Button
-                key={category.id}
-                label={`${category.name} · ${duration(
-                  summary.categories.get(category.id) ?? 0,
-                )}`}
-                selected={category.id === active?.id}
-                onPress={() => setCategoryID(category.id)}
-              />
-            ))}
-          </View>
+          {hasCategories && (
+            <View
+              style={[
+                styles.row,
+                styles.wrap,
+                layout.reviewCategories,
+              ]}
+            >
+              {visibleCategories.map(category => (
+                <Button
+                  key={category.id}
+                  label={`${category.name} · ${duration(category.seconds)}`}
+                  selected={category.id === active?.id}
+                  onPress={() => setCategoryID(category.id)}
+                />
+              ))}
+            </View>
+          )}
         </Panel>
         <Panel
           style={
@@ -1937,7 +1942,7 @@ function Report({
                 },
               ]}
             >
-              {duration(summary.categories.get(active.id) ?? 0)} active
+              {duration(active.seconds)} active
             </Text>
           )}
           {apps.map(([id, app]) => (
