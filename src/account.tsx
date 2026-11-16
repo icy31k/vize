@@ -33,7 +33,7 @@ const accountClient = tracker
   ? new AccountClient(tracker)
   : undefined;
 
-export function useToolbarAccount() {
+export function useAccount() {
   const [open, setOpen] = useState(false);
   const [profile, setProfile] = useState<AccountProfile | null>(null);
   const [busy, setBusy] = useState(false);
@@ -115,7 +115,7 @@ export function useToolbarAccount() {
 export function AccountMenu({
   account,
 }: {
-  account: ReturnType<typeof useToolbarAccount>;
+  account: ReturnType<typeof useAccount>;
 }) {
   const palette = usePalette();
   const textStyles = useMemo(() => accountTextStyles(palette), [palette]);

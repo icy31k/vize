@@ -6,7 +6,7 @@ Enable capture in the window or menu bar to begin. Vize stores foreground applic
 
 Vize runs offline and stores its database in Application Support. The database is at `~/Library/Application Support/Vize/activity.sqlite3`.
 
-Use the **Guest** menu in the toolbar to sign in or create an account. Tracking and reports are available in guest mode. Activity stays on this Mac in either mode. Vize keeps the session token in macOS Keychain.
+Use the **Guest** menu in the sidebar to sign in or create an account. Tracking and reports are available in guest mode. Activity stays on this Mac in either mode. Vize keeps the session token in macOS Keychain.
 
 ## Screenshots
 

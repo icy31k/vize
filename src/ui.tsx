@@ -91,6 +91,7 @@ export function Button({
   selected,
   expanded,
   showChevron,
+  leading,
   disabled,
   a11y,
   style,
@@ -101,6 +102,7 @@ export function Button({
   selected?: boolean;
   expanded?: boolean;
   showChevron?: boolean;
+  leading?: React.ReactNode;
   disabled?: boolean;
   a11y?: string;
   style?: ViewStyle;
@@ -138,6 +140,7 @@ export function Button({
   const chevronColor = {
     borderColor: labelColor,
   };
+  const horizontal = showChevron || leading != null;
 
   return (
     <Pressable
@@ -164,7 +167,7 @@ export function Button({
 
         return [
           styles.button,
-          showChevron && styles.buttonWithChevron,
+          horizontal && styles.buttonHorizontal,
           {
             backgroundColor,
             borderColor,
@@ -174,6 +177,7 @@ export function Button({
         ];
       }}
     >
+      {leading}
       <Text
         style={[
           styles.buttonText,
@@ -372,9 +376,10 @@ export const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
   },
-  buttonWithChevron: {
+  buttonHorizontal: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 5,
   },
   buttonChevron: {

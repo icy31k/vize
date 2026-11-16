@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import {
   AccountMenu,
-  useToolbarAccount,
+  useAccount,
 } from './src/account';
 import {
   tracker,
@@ -53,8 +53,14 @@ import {
   usePalette,
 } from './src/ui';
 
+const sidebarWidth = 176;
 const tabs = ['Focus Desk', 'Activity Journal', 'Weekly Review'] as const;
 type Tab = (typeof tabs)[number];
+const tabIcons: Record<Tab, string> = {
+  'Focus Desk': '◷',
+  'Activity Journal': '☰',
+  'Weekly Review': '▥',
+};
 type Action = (task: () => Promise<void>) => Promise<boolean>;
 const emptyHistory: History = { categories: [], activities: [], completed: 0 };
 const emptyTimer: TimerStatus = {
@@ -87,7 +93,7 @@ export default function App() {
 function Desktop() {
   const c = usePalette();
   const { width } = useWindowDimensions();
-  const account = useToolbarAccount();
+  const account = useAccount();
   const [tab, setTab] = useState<Tab>('Focus Desk');
   const [today, setToday] = useState(() => dayStart(new Date()));
   const [journalDay, setJournalDay] = useState(() => dayStart(new Date()));
@@ -129,7 +135,7 @@ function Desktop() {
       ? history.value
       : emptyHistory;
   const timer = status?.timer ?? emptyTimer;
-  const narrow = width < 880;
+  const narrow = width - sidebarWidth < 880;
   const accountLabel = account.profile
     ? 'Account'
     : 'Guest';
@@ -267,24 +273,65 @@ function Desktop() {
     );
   }
 
+  const pageStyle = {
+    backgroundColor: c.page,
+  };
+  const sidebarStyle = {
+    backgroundColor: c.card,
+    borderRightColor: c.border,
+  };
+  const brandMarkStyle = {
+    backgroundColor: c.accentSoft,
+  };
+  const brandRingStyle = {
+    borderColor: c.accent,
+  };
+  const inkStyle = {
+    color: c.ink,
+  };
+  const mutedStyle = {
+    color: c.muted,
+  };
+  const footerStyle = {
+    borderTopColor: c.border,
+    backgroundColor: c.card,
+  };
+  const alertStyle = {
+    borderBottomColor: c.border,
+  };
+  const warningStyle = {
+    color: c.warning,
+  };
+  const alert = error || status?.error;
+  const captureEnabled = status?.captureEnabled ?? false;
+  const captureLabel = captureEnabled
+    ? 'Pause capture'
+    : 'Enable capture';
+  const captureColor = captureEnabled
+    ? c.accent
+    : c.muted;
+  const captureDisabled =
+    busy ||
+    !status;
+  const showTimerFooter = tab !== 'Focus Desk';
+  const timerPhase = timer.phase === 'focus'
+    ? 'Focus session'
+    : 'Short break';
+  const timerCommand = timer.deadline
+    ? 'pause'
+    : 'start';
+
   return (
     <View
       style={[
-        layout.root,
-        {
-          backgroundColor: c.page,
-        },
+        layout.window,
+        pageStyle,
       ]}
     >
       <View
         style={[
-          styles.between,
-          styles.wrap,
-          layout.header,
-          {
-            backgroundColor: c.card,
-            borderBottomColor: c.border,
-          },
+          layout.sidebar,
+          sidebarStyle,
         ]}
       >
         <View
@@ -296,36 +343,27 @@ function Desktop() {
           <View
             style={[
               layout.brandMark,
-              {
-                backgroundColor: c.accentSoft,
-              },
+              brandMarkStyle,
             ]}
           >
             <View
               style={[
                 layout.brandRing,
-                {
-                  borderColor: c.accent,
-                },
+                brandRingStyle,
               ]}
             />
           </View>
           <Text
             style={[
               layout.brand,
-              {
-                color: c.ink,
-              },
+              inkStyle,
             ]}
           >
             Vize
           </Text>
         </View>
         <View
-          style={[
-            styles.row,
-            layout.tabControls,
-          ]}
+          style={layout.tabControls}
           accessibilityRole="tablist"
         >
           {tabs.map(name => (
@@ -334,36 +372,33 @@ function Desktop() {
               label={name}
               kind="quiet"
               selected={name === tab}
+              leading={
+                <Text
+                  accessible={false}
+                  style={[
+                    layout.tabIcon,
+                    inkStyle,
+                  ]}
+                >
+                  {tabIcons[name]}
+                </Text>
+              }
               onPress={() => setTab(name)}
+              style={layout.sidebarTab}
             />
           ))}
         </View>
-        <View
-          style={[
-            styles.row,
-            layout.captureControls,
-          ]}
-        >
-          <Dot
-            color={
-              status?.captureEnabled
-                ? c.accent
-                : c.muted
-            }
-          />
+        <View style={layout.sidebarActions}>
           <Button
-            label={
-              status?.captureEnabled
-                ? 'Pause capture'
-                : 'Enable capture'
+            label={captureLabel}
+            disabled={captureDisabled}
+            leading={
+              <Dot
+                color={captureColor}
+                size={7}
+              />
             }
-            disabled={
-              busy ||
-              !status
-            }
-            onPress={() =>
-              run(() => tracker!.setCapture(!status?.captureEnabled))
-            }
+            onPress={() => run(() => tracker!.setCapture(!captureEnabled))}
           />
           <Button
             label={accountLabel}
@@ -376,28 +411,22 @@ function Desktop() {
         </View>
       </View>
       <View style={layout.root}>
-        {(error ||
-        status?.error) && (
+        {alert && (
           <View
             style={[
               styles.between,
               layout.alert,
-              {
-                borderBottomColor: c.border,
-              },
+              alertStyle,
             ]}
           >
             <Text
               accessibilityRole="alert"
               style={[
                 layout.root,
-                {
-                  color: c.warning,
-                },
+                warningStyle,
               ]}
             >
-              {error ||
-                status?.error}
+              {alert}
             </Text>
             {error && (
               <Button
@@ -408,108 +437,95 @@ function Desktop() {
             )}
           </View>
         )}
-        {tab === 'Activity Journal'
-          ? (
-            <Journal
-              date={journalDay}
-              today={today}
-              setDate={setJournalDay}
-              data={data}
-              busy={busy}
-              run={run}
-            />
-          )
-          : (
-            <ScrollView
-              style={layout.root}
-              contentContainerStyle={layout.scroll}
-              keyboardShouldPersistTaps="handled"
+        <View style={layout.root}>
+          {tab === 'Activity Journal'
+            ? (
+              <Journal
+                date={journalDay}
+                today={today}
+                setDate={setJournalDay}
+                data={data}
+                busy={busy}
+                run={run}
+              />
+            )
+            : (
+              <ScrollView
+                style={layout.root}
+                contentContainerStyle={layout.scroll}
+                keyboardShouldPersistTaps="handled"
+              >
+                {tab === 'Focus Desk'
+                  ? (
+                    <FocusDesk
+                      today={today}
+                      status={status}
+                      data={data}
+                      busy={busy}
+                      ready={ready}
+                      narrow={narrow}
+                      run={run}
+                    />
+                  )
+                  : (
+                    <Report
+                      date={reportDay}
+                      today={today}
+                      setDate={setReportDay}
+                      mode={mode}
+                      setMode={setMode}
+                      data={data}
+                      narrow={narrow}
+                    />
+                  )}
+              </ScrollView>
+            )}
+        </View>
+        {showTimerFooter && (
+          <View
+            style={[
+              styles.between,
+              styles.wrap,
+              layout.footer,
+              footerStyle,
+            ]}
+          >
+            <View
+              style={[
+                styles.row,
+                layout.footerTimer,
+              ]}
             >
-              {tab === 'Focus Desk'
-                ? (
-                  <FocusDesk
-                    today={today}
-                    status={status}
-                    data={data}
-                    busy={busy}
-                    ready={ready}
-                    narrow={narrow}
-                    run={run}
-                  />
-                )
-                : (
-                  <Report
-                    date={reportDay}
-                    today={today}
-                    setDate={setReportDay}
-                    mode={mode}
-                    setMode={setMode}
-                    data={data}
-                    narrow={narrow}
-                  />
-                )}
-            </ScrollView>
-          )}
-        {account.open && (
-          <View style={layout.accountOverlay}>
-            <AccountMenu
-              account={account}
+              <Text
+                style={[
+                  styles.small,
+                  mutedStyle,
+                ]}
+              >
+                {timerPhase}
+              </Text>
+              <Text
+                style={[
+                  styles.numbers,
+                  layout.footerCountdown,
+                  inkStyle,
+                ]}
+              >
+                {countdown(timer.remaining)}
+              </Text>
+            </View>
+            <Button
+              label={timerLabel(timer)}
+              disabled={busy}
+              onPress={() => run(() => tracker!.timerCommand(timerCommand))}
             />
           </View>
         )}
       </View>
-      {tab !== 'Focus Desk' && (
-        <View
-          style={[
-            styles.between,
-            styles.wrap,
-            layout.footer,
-            {
-              borderTopColor: c.border,
-              backgroundColor: c.card,
-            },
-          ]}
-        >
-          <View
-            style={[
-              styles.row,
-              layout.footerTimer,
-            ]}
-          >
-            <Text
-              style={[
-                styles.small,
-                {
-                  color: c.muted,
-                },
-              ]}
-            >
-              {timer.phase === 'focus'
-                ? 'Focus session'
-                : 'Short break'}
-            </Text>
-            <Text
-              style={[
-                styles.numbers,
-                layout.footerCountdown,
-                {
-                  color: c.ink,
-                },
-              ]}
-            >
-              {countdown(timer.remaining)}
-            </Text>
-          </View>
-          <Button
-            label={timerLabel(timer)}
-            disabled={busy}
-            onPress={() =>
-              run(() =>
-                tracker!.timerCommand(timer.deadline
-                  ? 'pause'
-                  : 'start'),
-              )
-            }
+      {account.open && (
+        <View style={layout.accountOverlay}>
+          <AccountMenu
+            account={account}
           />
         </View>
       )}
@@ -1984,23 +2000,40 @@ const layout = StyleSheet.create({
   unavailable: {
     padding: 28,
   },
-  header: {
-    paddingHorizontal: 21,
-    paddingVertical: 11,
-    borderBottomWidth: 1,
+  window: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  sidebar: {
+    width: sidebarWidth,
+    paddingTop: 48,
+    paddingHorizontal: 10,
+    paddingBottom: 12,
+    borderRightWidth: 1,
   },
   accountOverlay: {
     position: 'absolute',
-    top: 6,
-    right: 21,
+    bottom: 12,
+    left: sidebarWidth + 12,
     width: 330,
     zIndex: 2,
   },
   tabControls: {
     gap: 4,
   },
-  captureControls: {
-    gap: 7,
+  sidebarTab: {
+    justifyContent: 'flex-start',
+    gap: 8,
+    paddingHorizontal: 8,
+  },
+  tabIcon: {
+    width: 15,
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  sidebarActions: {
+    marginTop: 'auto',
+    gap: 6,
   },
   brand: {
     fontSize: 20,
@@ -2008,7 +2041,10 @@ const layout = StyleSheet.create({
     letterSpacing: -0.65,
   },
   brandRow: {
-    gap: 10,
+    gap: 8,
+    marginHorizontal: 5,
+    marginTop: 6,
+    marginBottom: 15,
   },
   brandMark: {
     width: 29,

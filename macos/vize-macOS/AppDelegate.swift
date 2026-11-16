@@ -142,12 +142,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func openWindow() {
         if window == nil {
             let newWindow = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1060, height: 725),
-                                     styleMask: [.titled, .closable, .miniaturizable, .resizable],
+                                     styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
                                      backing: .buffered, defer: false)
             newWindow.title = "Vize"
+            newWindow.titleVisibility = .hidden
+            newWindow.titlebarAppearsTransparent = true
+            newWindow.titlebarSeparatorStyle = .none
             newWindow.minSize = NSSize(width: 620, height: 560)
             newWindow.isReleasedWhenClosed = false
-            newWindow.contentView = factory.rootViewFactory.view(withModuleName: "Vize")
+            let rootView = factory.rootViewFactory.view(withModuleName: "Vize")
+            let contentView = NSView()
+            // Leave the native window buttons in AppKit's title bar.
+            let dragView = SidebarDragView()
+            rootView.translatesAutoresizingMaskIntoConstraints = false
+            dragView.translatesAutoresizingMaskIntoConstraints = false
+            contentView.addSubview(rootView)
+            contentView.addSubview(dragView)
+            NSLayoutConstraint.activate([
+                rootView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+                rootView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+                rootView.topAnchor.constraint(equalTo: contentView.topAnchor),
+                rootView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+                dragView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 88),
+                dragView.widthAnchor.constraint(equalToConstant: 88),
+                dragView.topAnchor.constraint(equalTo: contentView.topAnchor),
+                dragView.heightAnchor.constraint(equalToConstant: 48),
+            ])
+            newWindow.contentView = contentView
             newWindow.center()
             window = newWindow
         }
@@ -179,6 +200,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             openWindow()
             NSAlert(error: error).runModal()
         }
+    }
+}
+
+private final class SidebarDragView: NSView {
+    override func mouseDown(with event: NSEvent) {
+        window?.performDrag(with: event)
     }
 }
 
