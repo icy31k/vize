@@ -54,6 +54,8 @@ import {
 } from './src/ui';
 
 const sidebarWidth = 176;
+const visibleCategoryRows = 10;
+const categoryRowHeight = 36;
 const tabs = ['Focus Desk', 'Activity Journal', 'Weekly Review'] as const;
 type Tab = (typeof tabs)[number];
 const tabIcons: Record<Tab, string> = {
@@ -621,7 +623,25 @@ function FocusDesk({
     }))
     .filter(({ seconds }) => seconds >= 1)
     .sort((a, b) => b.seconds - a.seconds);
-  const hasCategoryTotals = visibleCategoriesByDuration.length > 0;
+  const categoryCount = visibleCategoriesByDuration.length;
+  const hasCategoryTotals = categoryCount > 0;
+  const categoriesOverflow = categoryCount > visibleCategoryRows;
+  const timerPanelTheme = {
+    backgroundColor: c.darkPanel,
+  };
+  const headingTheme = {
+    color: c.ink,
+  };
+  const categoryCountTheme = {
+    color: c.muted,
+  };
+  const categoryRows = visibleCategoriesByDuration.map(({ category, seconds }) => (
+    <CategoryRow
+      key={category.id}
+      category={category}
+      value={duration(seconds)}
+    />
+  ));
 
   return (
     <>
@@ -632,15 +652,14 @@ function FocusDesk({
       <View
         style={[
           layout.columns,
+          layout.focusDeskColumns,
           narrow && layout.stacked,
         ]}
       >
         <View
           style={[
             layout.timerPanel,
-            {
-              backgroundColor: c.darkPanel,
-            },
+            timerPanelTheme,
             !narrow && layout.wideTimerPanel,
           ]}
         >
@@ -903,17 +922,32 @@ function FocusDesk({
               </Text>
             </View>
           </View>
-          <Text
+          <View
             style={[
-              styles.section,
+              styles.between,
+              styles.wrap,
               layout.categoryHeading,
-              {
-                color: c.ink,
-              },
             ]}
           >
-            Time by category
-          </Text>
+            <Text
+              style={[
+                styles.section,
+                headingTheme,
+              ]}
+            >
+              Time by category
+            </Text>
+            {categoriesOverflow && (
+              <Text
+                style={[
+                  styles.small,
+                  categoryCountTheme,
+                ]}
+              >
+                {categoryCount} categories
+              </Text>
+            )}
+          </View>
           {hasCategoryTotals && (
             <View
               style={[
@@ -938,13 +972,19 @@ function FocusDesk({
               ))}
             </View>
           )}
-          {visibleCategoriesByDuration.map(({ category, seconds }) => (
-            <CategoryRow
-              key={category.id}
-              category={category}
-              value={duration(seconds)}
-            />
-          ))}
+          {categoriesOverflow
+            ? (
+              <ScrollView
+                accessibilityLabel="Category totals"
+                style={layout.categoryScroll}
+                contentContainerStyle={layout.categoryScrollContent}
+                showsVerticalScrollIndicator
+                bounces={false}
+              >
+                {categoryRows}
+              </ScrollView>
+            )
+            : categoryRows}
           {!totals.total && (
             <Text
               style={[
@@ -974,14 +1014,22 @@ function CategoryRow({
   value: string;
 }) {
   const c = usePalette();
+  const dividerTheme = {
+    borderBottomColor: c.border,
+  };
+  const nameTheme = {
+    color: c.ink,
+  };
+  const valueTheme = {
+    color: c.muted,
+  };
+  const dotColor = categoryColor(c, category.id);
   return (
     <View
       style={[
         styles.between,
-        layout.line,
-        {
-          borderBottomColor: c.border,
-        },
+        layout.categoryRow,
+        dividerTheme,
       ]}
     >
       <View
@@ -991,15 +1039,13 @@ function CategoryRow({
         ]}
       >
         <Dot
-          color={categoryColor(c, category.id)}
+          color={dotColor}
         />
         <Text
           numberOfLines={1}
           style={[
             layout.shrink,
-            {
-              color: c.ink,
-            },
+            nameTheme,
           ]}
         >
           {category.name}
@@ -1008,9 +1054,7 @@ function CategoryRow({
       <Text
         style={[
           styles.numbers,
-          {
-            color: c.muted,
-          },
+          valueTheme,
         ]}
       >
         {value}
@@ -2089,6 +2133,9 @@ const layout = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 15,
   },
+  focusDeskColumns: {
+    alignItems: 'stretch',
+  },
   stacked: {
     flexDirection: 'column',
     alignItems: 'stretch',
@@ -2154,6 +2201,7 @@ const layout = StyleSheet.create({
   },
   timerPanel: {
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 15,
     padding: 21,
     borderRadius: 16,
@@ -2235,6 +2283,18 @@ const layout = StyleSheet.create({
   categoryRowLabel: {
     gap: 8,
     flex: 1,
+  },
+  categoryRow: {
+    height: categoryRowHeight,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  categoryScroll: {
+    flexGrow: 0,
+    flexShrink: 0,
+    height: categoryRowHeight * visibleCategoryRows,
+  },
+  categoryScrollContent: {
+    paddingRight: 12,
   },
   line: {
     paddingVertical: 9,
