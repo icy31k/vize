@@ -56,12 +56,18 @@ import {
 const sidebarWidth = 176;
 const visibleCategoryRows = 10;
 const categoryRowHeight = 36;
-const tabs = ['Focus Desk', 'Activity Journal', 'Weekly Review'] as const;
+const tabs = [
+  'Focus Desk',
+  'Activity Journal',
+  'Weekly Review',
+  'Settings',
+] as const;
 type Tab = (typeof tabs)[number];
 const tabIcons: Record<Tab, string> = {
   'Focus Desk': '◷',
   'Activity Journal': '☰',
   'Weekly Review': '▥',
+  Settings: '⚙',
 };
 type Action = (task: () => Promise<void>) => Promise<boolean>;
 const emptyHistory: History = { categories: [], activities: [], completed: 0 };
@@ -71,6 +77,8 @@ const emptyTimer: TimerStatus = {
   remaining: 1500,
   focusMinutes: 25,
   breakMinutes: 5,
+  longBreakMinutes: 15,
+  longBreakInterval: 4,
   hasStarted: false,
 };
 const fullDate = (date: Date) =>
@@ -113,12 +121,12 @@ function Desktop() {
   const lastStatus = useRef<Status | undefined>(undefined);
   const mounted = useRef(true);
   const busyRef = useRef(false);
-  const day =
-    tab === 'Focus Desk'
-      ? today
-      : tab === 'Activity Journal'
-      ? journalDay
-      : reportDay;
+  let day = today;
+  if (tab === 'Activity Journal') {
+    day = journalDay;
+  } else if (tab === 'Weekly Review') {
+    day = reportDay;
+  }
   const start =
     tab === 'Weekly Review' &&
     mode === 'week'
@@ -312,16 +320,53 @@ function Desktop() {
   const captureColor = captureEnabled
     ? c.accent
     : c.muted;
-  const captureDisabled =
+  const nativeControlsDisabled =
     busy ||
     !status;
   const showTimerFooter = tab !== 'Focus Desk';
-  const timerPhase = timer.phase === 'focus'
-    ? 'Focus session'
-    : 'Short break';
+  const timerPhase = timerPhaseLabel(timer.phase);
   const timerCommand = timer.deadline
     ? 'pause'
     : 'start';
+
+  let scrollPage: React.ReactNode;
+  switch (tab) {
+    case 'Focus Desk':
+      scrollPage = (
+        <FocusDesk
+          today={today}
+          status={status}
+          data={data}
+          busy={busy}
+          ready={ready}
+          narrow={narrow}
+          run={run}
+        />
+      );
+      break;
+    case 'Weekly Review':
+      scrollPage = (
+        <Report
+          date={reportDay}
+          today={today}
+          setDate={setReportDay}
+          mode={mode}
+          setMode={setMode}
+          data={data}
+          narrow={narrow}
+        />
+      );
+      break;
+    case 'Settings':
+      scrollPage = (
+        <Settings
+          timer={timer}
+          disabled={nativeControlsDisabled}
+          run={run}
+        />
+      );
+      break;
+  }
 
   return (
     <View
@@ -393,7 +438,7 @@ function Desktop() {
         <View style={layout.sidebarActions}>
           <Button
             label={captureLabel}
-            disabled={captureDisabled}
+            disabled={nativeControlsDisabled}
             leading={
               <Dot
                 color={captureColor}
@@ -457,29 +502,7 @@ function Desktop() {
                 contentContainerStyle={layout.scroll}
                 keyboardShouldPersistTaps="handled"
               >
-                {tab === 'Focus Desk'
-                  ? (
-                    <FocusDesk
-                      today={today}
-                      status={status}
-                      data={data}
-                      busy={busy}
-                      ready={ready}
-                      narrow={narrow}
-                      run={run}
-                    />
-                  )
-                  : (
-                    <Report
-                      date={reportDay}
-                      today={today}
-                      setDate={setReportDay}
-                      mode={mode}
-                      setMode={setMode}
-                      data={data}
-                      narrow={narrow}
-                    />
-                  )}
+                {scrollPage}
               </ScrollView>
             )}
         </View>
@@ -541,9 +564,15 @@ function Title({
   children,
 }: React.PropsWithChildren<{
   label: string;
-  date: string;
+  date?: string;
 }>) {
   const c = usePalette();
+  const dateTheme = {
+    color: c.muted,
+  };
+  const titleTheme = {
+    color: c.ink,
+  };
   return (
     <View
       style={[
@@ -553,24 +582,22 @@ function Title({
       ]}
     >
       <View>
-        <Text
-          style={[
-            styles.small,
-            layout.titleDate,
-            {
-              color: c.muted,
-            },
-          ]}
-        >
-          {date}
-        </Text>
+        {date && (
+          <Text
+            style={[
+              styles.small,
+              layout.titleDate,
+              dateTheme,
+            ]}
+          >
+            {date}
+          </Text>
+        )}
         <Text
           accessibilityRole="header"
           style={[
             styles.heading,
-            {
-              color: c.ink,
-            },
+            titleTheme,
           ]}
         >
           {label}
@@ -579,6 +606,17 @@ function Title({
       {children}
     </View>
   );
+}
+
+function timerPhaseLabel(phase: TimerStatus['phase']) {
+  switch (phase) {
+    case 'focus':
+      return 'Focus session';
+    case 'rest':
+      return 'Short break';
+    case 'longRest':
+      return 'Long break';
+  }
 }
 
 function timerLabel(timer: TimerStatus) {
@@ -591,6 +629,120 @@ function timerLabel(timer: TimerStatus) {
   return timer.phase === 'focus'
     ? 'Start focus'
     : 'Start break';
+}
+
+function Settings({
+  timer,
+  disabled,
+  run,
+}: {
+  timer: TimerStatus;
+  disabled: boolean;
+  run: Action;
+}) {
+  const c = usePalette();
+  const [minutesDraft, setMinutes] = useState<string>();
+  const [intervalDraft, setInterval] = useState<string>();
+  const minutes = minutesDraft ?? String(timer.longBreakMinutes);
+  const interval = intervalDraft ?? String(timer.longBreakInterval);
+  const minutesValue = Number(minutes);
+  const intervalValue = Number(interval);
+  const valid =
+    /^\d+$/.test(minutes) &&
+    minutesValue >= 1 &&
+    minutesValue <= 60 &&
+    /^\d+$/.test(interval) &&
+    intervalValue >= 1 &&
+    intervalValue <= 99;
+  const changed =
+    minutesValue !== timer.longBreakMinutes ||
+    intervalValue !== timer.longBreakInterval;
+  const saveDisabled =
+    disabled ||
+    !valid ||
+    !changed;
+  const inkTheme = {
+    color: c.ink,
+  };
+  const hintTheme = {
+    color: valid
+      ? c.muted
+      : c.warning,
+  };
+  const hint = valid
+    ? 'The timer queues a long break in place of the usual short break.'
+    : 'Enter 1–60 minutes and 1–99 Pomodoros.';
+  const save = async () => {
+    if (saveDisabled) {
+      return;
+    }
+    await run(() => tracker!.setLongBreak(minutesValue, intervalValue));
+  };
+
+  return (
+    <>
+      <Title label="Settings" />
+      <Panel style={layout.settingsPanel}>
+        <Text
+          accessibilityRole="header"
+          style={[
+            styles.section,
+            inkTheme,
+          ]}
+        >
+          Long break
+        </Text>
+        <View
+          style={[
+            styles.row,
+            styles.wrap,
+            layout.longBreakSetting,
+          ]}
+        >
+          <View style={layout.settingPhrase}>
+            <Text style={inkTheme}>Take a break for</Text>
+            <TextField
+              accessibilityLabel="Long break minutes"
+              value={minutes}
+              placeholder="15"
+              maxLength={2}
+              onChangeText={setMinutes}
+              onSubmit={save}
+              style={layout.longBreakField}
+            />
+            <Text style={inkTheme}>minutes after every</Text>
+          </View>
+          <View style={layout.settingPhrase}>
+            <TextField
+              accessibilityLabel="Pomodoros per long break"
+              value={interval}
+              placeholder="4"
+              maxLength={2}
+              onChangeText={setInterval}
+              onSubmit={save}
+              style={layout.longBreakField}
+            />
+            <Text style={inkTheme}>completed Pomodoros.</Text>
+          </View>
+        </View>
+        <Text
+          style={[
+            styles.small,
+            hintTheme,
+          ]}
+        >
+          {hint}
+        </Text>
+        <Button
+          label="Save"
+          kind="primary"
+          onPress={save}
+          disabled={saveDisabled}
+          style={layout.settingsSave}
+        />
+      </Panel>
+    </>
+  );
 }
 
 function FocusDesk({
@@ -612,6 +764,7 @@ function FocusDesk({
 }) {
   const c = usePalette();
   const timer = status?.timer ?? emptyTimer;
+  const timerPhase = timerPhaseLabel(timer.phase);
   const [editing, setEditing] = useState(false);
   const [focus, setFocus] = useState('25');
   const [rest, setRest] = useState('5');
@@ -677,7 +830,7 @@ function FocusDesk({
             />
             <Button
               label="Break"
-              selected={timer.phase === 'rest'}
+              selected={timer.phase !== 'focus'}
               disabled={busy}
               onPress={() => run(() => tracker!.timerCommand('rest'))}
             />
@@ -709,9 +862,7 @@ function FocusDesk({
                 },
               ]}
             >
-              {timer.phase === 'focus'
-                ? 'Focus session'
-                : 'Short break'}
+              {timerPhase}
             </Text>
           </View>
           <View
@@ -2124,6 +2275,25 @@ const layout = StyleSheet.create({
   titleDate: {
     fontWeight: '600',
     marginBottom: 3,
+  },
+  settingsPanel: {
+    maxWidth: 640,
+    gap: 12,
+  },
+  longBreakSetting: {
+    gap: 6,
+  },
+  settingPhrase: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  longBreakField: {
+    width: 49,
+  },
+  settingsSave: {
+    alignSelf: 'flex-start',
+    marginTop: 4,
   },
   dateControls: {
     gap: 6,

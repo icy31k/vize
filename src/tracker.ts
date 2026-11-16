@@ -16,11 +16,13 @@ export type History = {
   completed: number;
 };
 export type TimerStatus = {
-  phase: 'focus' | 'rest';
+  phase: 'focus' | 'rest' | 'longRest';
   deadline: number | null;
   remaining: number;
   focusMinutes: number;
   breakMinutes: number;
+  longBreakMinutes: number;
+  longBreakInterval: number;
   hasStarted: boolean;
 };
 export type Status = {

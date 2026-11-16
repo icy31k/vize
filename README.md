@@ -2,6 +2,8 @@
 
 Vize is a Mac time tracker with a Pomodoro timer and local reports. **Focus Desk** shows the timer and today’s category totals. **Activity Journal** edits captured blocks and saves app defaults. **Weekly Review** shows day and week totals with a category-to-app breakdown.
 
+Use **Settings** to choose how long the long break lasts and how often it replaces the short break. By default, Vize queues a 15-minute long break after every four completed Pomodoros.
+
 Enable capture in the window or menu bar to begin. Vize stores foreground application names, bundle identifiers, and timestamps. It ends a block after five minutes without input. Closing the window keeps capture and the timer running. Use the menu-bar item to reopen Vize or quit. Quitting pauses an unfinished timer and preserves its remaining time.
 
 Vize runs offline and stores its database in Application Support. The database is at `~/Library/Application Support/Vize/activity.sqlite3`.

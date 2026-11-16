@@ -29,6 +29,7 @@ type Bridge = AccountPlatform & {
     command: 'start' | 'pause' | 'reset' | 'focus' | 'rest',
   ): Promise<void>;
   setDurations(focus: number, rest: number): Promise<void>;
+  setLongBreak(minutes: number, interval: number): Promise<void>;
   addListener(event: string): void;
   removeListeners(count: number): void;
 };

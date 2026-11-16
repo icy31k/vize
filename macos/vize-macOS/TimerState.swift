@@ -1,13 +1,13 @@
 import Foundation
 
 enum TimerPhase: String, Codable {
-    case focus, rest
+    case focus, rest, longRest
+}
 
-    var next: Self {
-        self == .focus
-            ? .rest
-            : .focus
-    }
+struct LongBreakCycle: Codable, Equatable {
+    var minutes = 15
+    var interval = 4
+    var completed = 0
 }
 
 struct TimerState: Codable, Equatable {
@@ -17,13 +17,22 @@ struct TimerState: Codable, Equatable {
     var remaining: Double = 25 * 60
     var deadline: Double?
     var runID: String?
+    // Older saved timers have no cycle; start those timers with the defaults.
+    private var savedLongBreakCycle: LongBreakCycle?
+
+    var longBreakCycle: LongBreakCycle {
+        savedLongBreakCycle ?? LongBreakCycle()
+    }
 
     var phaseDuration: Double {
-        Double(
-            (phase == .focus
-                ? focusMinutes
-                : breakMinutes) * 60
-        )
+        switch phase {
+        case .focus:
+            return Double(focusMinutes * 60)
+        case .rest:
+            return Double(breakMinutes * 60)
+        case .longRest:
+            return Double(longBreakCycle.minutes * 60)
+        }
     }
 
     func secondsRemaining(at now: Double) -> Double {
@@ -67,16 +76,44 @@ struct TimerState: Codable, Equatable {
         }
     }
 
+    mutating func setLongBreak(minutes: Int, interval: Int) throws {
+        guard (1...60).contains(minutes),
+              (1...99).contains(interval)
+        else {
+            throw StoreError.invalid("Use 1–60 minutes and 1–99 Pomodoros for a long break.")
+        }
+        var cycle = longBreakCycle
+        cycle.minutes = minutes
+        cycle.interval = interval
+        savedLongBreakCycle = cycle
+        if phase == .longRest,
+           runID == nil {
+            reset()
+        }
+    }
+
     mutating func advance(at now: Double) -> (changed: Bool, completion: (id: String, at: Double)?) {
         guard let deadline,
               deadline <= now
         else {
             return (false, nil)
         }
-        let completion = phase == .focus
-            ? runID.map { (id: $0, at: deadline) }
-            : nil
-        queue(phase.next)
+        guard phase == .focus else {
+            queue(.focus)
+            return (true, nil)
+        }
+
+        let completion = runID.map { (id: $0, at: deadline) }
+        var cycle = longBreakCycle
+        cycle.completed += 1
+        let longBreakDue = cycle.completed >= cycle.interval
+        if longBreakDue {
+            cycle.completed = 0
+        }
+        savedLongBreakCycle = cycle
+        queue(longBreakDue
+            ? .longRest
+            : .rest)
         return (true, completion)
     }
 

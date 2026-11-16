@@ -88,7 +88,62 @@ enum NativeChecks {
         try store.saveTimer(timer.encoded(), completion: expired.completion)
         let completed = try reopened.pomodoros(from: 1_000, to: 1_100)
         precondition(completed == 1)
+        try checkLongBreaks(store)
         print("Capture boundaries, SQLite persistence, group categories, individual exceptions, app defaults, and timer verified.")
+    }
+
+    private static func checkLongBreaks(_ store: Store) throws {
+        let legacy = Data("""
+            {"phase":"focus","focusMinutes":1,"breakMinutes":5,"remaining":60}
+            """.utf8)
+        var timer = try JSONDecoder().decode(TimerState.self, from: legacy)
+        // Abandoning a focus run and taking a manual break should not move the cycle forward.
+        timer.start(at: 0)
+        timer.reset()
+        timer.queue(.rest)
+        let manualBreak = finishPhase(&timer)
+        precondition(!manualBreak)
+
+        for _ in 1...3 {
+            let focus = finishPhase(&timer)
+            precondition(focus && timer.phase == .rest && timer.remaining == 300)
+            let rest = finishPhase(&timer)
+            precondition(!rest && timer.phase == .focus)
+        }
+
+        try store.saveTimer(timer.encoded())
+        guard let saved = try store.setting("timer") else {
+            preconditionFailure("Expected the timer cycle to be saved.")
+        }
+        timer = try JSONDecoder().decode(TimerState.self, from: Data(saved.utf8))
+        let fourth = finishPhase(&timer)
+        precondition(fourth && timer.phase == .longRest && timer.remaining == 900)
+
+        timer.start(at: 0)
+        timer.pause(at: 30)
+        try timer.setLongBreak(minutes: 20, interval: 2)
+        precondition(timer.remaining == 870)
+        let longBreak = finishPhase(&timer)
+        precondition(!longBreak && timer.phase == .focus)
+
+        let nextFocus = finishPhase(&timer)
+        precondition(nextFocus && timer.phase == .rest)
+        _ = finishPhase(&timer)
+        let secondFocus = finishPhase(&timer)
+        precondition(secondFocus && timer.phase == .longRest && timer.remaining == 1_200)
+        try store.saveTimer(timer.encoded())
+        guard let savedPreferences = try store.setting("timer") else {
+            preconditionFailure("Expected the timer preferences to be saved.")
+        }
+        let restored = try JSONDecoder().decode(TimerState.self, from: Data(savedPreferences.utf8))
+        precondition(restored == timer)
+    }
+
+    private static func finishPhase(_ timer: inout TimerState) -> Bool {
+        timer.start(at: 0)
+        let result = timer.advance(at: timer.remaining)
+        precondition(result.changed)
+        return result.completion != nil
     }
 
     private static func checkForegroundIdentity() {

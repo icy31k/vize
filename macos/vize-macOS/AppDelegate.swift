@@ -109,7 +109,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let capture = state["captureEnabled"] as? Bool ?? false
         let timer = state["timer"] as? [String: Any] ?? [:]
         let active = timer["deadline"] is Double
-        let rest = timer["phase"] as? String == "rest"
+        let phase = timer["phase"] as? String
+        let rest =
+            phase == "rest" ||
+            phase == "longRest"
         let remaining = Int(ceil(timer["remaining"] as? Double ?? 0))
         let countdown = String(format: "%02d:%02d", remaining / 60, remaining % 60)
         statusItem?.button?.title = active

@@ -205,6 +205,8 @@ final class VizeService {
                 "deadline": timer.deadline as Any? ?? NSNull(),
                 "focusMinutes": timer.focusMinutes,
                 "breakMinutes": timer.breakMinutes,
+                "longBreakMinutes": timer.longBreakCycle.minutes,
+                "longBreakInterval": timer.longBreakCycle.interval,
                 "hasStarted": timer.runID != nil,
             ] as [String: Any],
         ]
@@ -280,7 +282,7 @@ final class VizeService {
                 updated.queue(.focus)
             }
         case "rest":
-            if updated.phase != .rest {
+            if updated.phase == .focus {
                 updated.queue(.rest)
             }
         default: throw StoreError.invalid("Unknown timer command.")
@@ -294,6 +296,16 @@ final class VizeService {
         let store = try requireStore()
         var updated = timer
         try updated.setDurations(focus: focus, rest: rest)
+        try store.saveTimer(updated.encoded())
+        timer = updated
+        publish()
+    }
+
+    func setLongBreak(minutes: Int, interval: Int) throws {
+        let store = try requireStore()
+        try reconcileTimer(store, at: now)
+        var updated = timer
+        try updated.setLongBreak(minutes: minutes, interval: interval)
         try store.saveTimer(updated.encoded())
         timer = updated
         publish()

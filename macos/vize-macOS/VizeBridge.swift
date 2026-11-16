@@ -85,6 +85,19 @@ final class VizeBridge: RCTEventEmitter {
         }
     }
 
+    @objc(setLongBreak:interval:resolver:rejecter:)
+    func setLongBreak(
+        _ minutes: NSNumber,
+        interval: NSNumber,
+        resolver resolve: RCTPromiseResolveBlock,
+        rejecter reject: RCTPromiseRejectBlock
+    ) {
+        perform(resolve, reject) {
+            try VizeService.shared.setLongBreak(minutes: minutes.intValue, interval: interval.intValue)
+            return nil
+        }
+    }
+
     @objc(readAccountSession:rejecter:)
     func readAccountSession(_ resolve: RCTPromiseResolveBlock, rejecter reject: RCTPromiseRejectBlock) {
         perform(resolve, reject) { try accountPlatform.readSession() }
