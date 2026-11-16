@@ -390,9 +390,6 @@ export const styles = StyleSheet.create({
     borderRightWidth: 1.5,
     transform: [
       {
-        translateY: -2,
-      },
-      {
         rotate: '45deg',
       },
     ],
