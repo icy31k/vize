@@ -598,12 +598,14 @@ function FocusDesk({
   const [focus, setFocus] = useState('25');
   const [rest, setRest] = useState('5');
   const totals = summarize(data.activities, dayRange(today));
-  const categoriesByDuration = data.categories
+  const visibleCategoriesByDuration = data.categories
     .map(category => ({
       category,
       seconds: totals.categories.get(category.id) ?? 0,
     }))
+    .filter(({ seconds }) => seconds >= 1)
     .sort((a, b) => b.seconds - a.seconds);
+  const hasCategoryTotals = visibleCategoriesByDuration.length > 0;
 
   return (
     <>
@@ -896,7 +898,7 @@ function FocusDesk({
           >
             Time by category
           </Text>
-          {totals.total > 0 && (
+          {hasCategoryTotals && (
             <View
               style={[
                 styles.row,
@@ -906,23 +908,21 @@ function FocusDesk({
                 },
               ]}
             >
-              {categoriesByDuration
-                .filter(({ seconds }) => seconds > 0)
-                .map(({ category, seconds }) => (
-                  <View
-                    key={category.id}
-                    style={[
-                      layout.allocationSegment,
-                      {
-                        flex: seconds,
-                        backgroundColor: categoryColor(c, category.id),
-                      },
-                    ]}
-                  />
-                ))}
+              {visibleCategoriesByDuration.map(({ category, seconds }) => (
+                <View
+                  key={category.id}
+                  style={[
+                    layout.allocationSegment,
+                    {
+                      flex: seconds,
+                      backgroundColor: categoryColor(c, category.id),
+                    },
+                  ]}
+                />
+              ))}
             </View>
           )}
-          {categoriesByDuration.map(({ category, seconds }) => (
+          {visibleCategoriesByDuration.map(({ category, seconds }) => (
             <CategoryRow
               key={category.id}
               category={category}
