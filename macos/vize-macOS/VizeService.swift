@@ -9,6 +9,12 @@ final class VizeService {
     private static let allInputEvents = CGEventType(rawValue: UInt32.max)!
     private var store: Store?
     private var timer = TimerState()
+    private lazy var timerEndSound: NSSound? = {
+        guard let url = Bundle.main.url(forResource: "Kiln", withExtension: "wav") else {
+            return nil
+        }
+        return NSSound(contentsOf: url, byReference: false)
+    }()
     private var capture = CapturePolicy()
     private var foreground: ForegroundApp?
     private var foregroundProcess: NSRunningApplication?
@@ -255,7 +261,9 @@ final class VizeService {
         }
         try store.saveTimer(updated.encoded(), completion: result.completion)
         timer = updated
-        NSSound.beep()
+        if timerEndSound?.play() != true {
+            NSSound.beep()
+        }
     }
 
     func timerCommand(_ command: String) throws {

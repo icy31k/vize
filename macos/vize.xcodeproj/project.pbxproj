@@ -21,6 +21,7 @@
 		E20000000000000000000005 /* VizeBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000005 /* VizeBridge.m */; };
 		E20000000000000000000006 /* CapturePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000006 /* CapturePolicy.swift */; };
 		E20000000000000000000007 /* ForegroundApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000007 /* ForegroundApp.swift */; };
+		E20000000000000000000008 /* Kiln.wav in Resources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000008 /* Kiln.wav */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,6 +44,7 @@
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		E10000000000000000000006 /* CapturePolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapturePolicy.swift; sourceTree = "<group>"; };
 		E10000000000000000000007 /* ForegroundApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForegroundApp.swift; sourceTree = "<group>"; };
+		E10000000000000000000008 /* Kiln.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Kiln.wav; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -87,6 +89,7 @@
 				E10000000000000000000002 /* TimerState.swift */,
 				E10000000000000000000001 /* Store.swift */,
 				514201512437B4B40078DB4F /* Assets.xcassets */,
+				E10000000000000000000008 /* Kiln.wav */,
 				514201562437B4B40078DB4F /* Info.plist */,
 			);
 			path = "vize-macOS";
@@ -224,6 +227,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				514201522437B4B40078DB4F /* Assets.xcassets in Resources */,
+				E20000000000000000000008 /* Kiln.wav in Resources */,
 				1A7D61DD2BC37364AC584378 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
