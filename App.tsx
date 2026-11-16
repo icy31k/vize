@@ -1533,7 +1533,7 @@ function JournalCategoryEditor({
 }) {
   const c = usePalette();
   const [categoryID, setCategoryID] = useState(initialCategoryID);
-  const [asDefault, setDefault] = useState(false);
+  const [asDefault, setDefault] = useState(true);
   const first = activities[0];
   const count = activities.length;
   const category = categories.find(item => item.id === categoryID);
