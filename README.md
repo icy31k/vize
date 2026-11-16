@@ -12,15 +12,15 @@ Use the **Guest** menu in the sidebar to sign in or create an account. Tracking 
 
 ### Focus Desk
 
-![Vize Focus Desk with the Pomodoro timer and today's activity by category](docs/screenshots/focus-desk.jpg)
+![Vize Focus Desk with the Pomodoro timer and today's activity by category](docs/screenshots/focus-desk.png)
 
 ### Activity Journal
 
-![Vize Activity Journal grouped by app and sorted by total time, with Safari expanded to show entries in different categories](docs/screenshots/activity-journal.jpg)
+![Vize Activity Journal grouped by app, with the category editor open for Safari's three entries](docs/screenshots/activity-journal.png)
 
 ### Weekly Review
 
-![Vize Weekly Review with daily activity totals and an app breakdown for the selected category](docs/screenshots/weekly-review.jpg)
+![Vize Weekly Review with daily activity totals and an app breakdown for the selected category](docs/screenshots/weekly-review.png)
 
 ## Build on macOS
 
