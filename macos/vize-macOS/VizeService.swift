@@ -18,6 +18,7 @@ final class VizeService {
     private var capture = CapturePolicy()
     private var foreground: ForegroundApp?
     private var foregroundProcess: NSRunningApplication?
+    private var recentApp: ForegroundApp?
     private var activity: Activity?
     private var monitor: Timer?
     private var observations: [(NotificationCenter, NSObjectProtocol)] = []
@@ -152,6 +153,11 @@ final class VizeService {
                     } else {
                         activity = try store.beginActivity(appID: target.id, name: target.name, start: timestamp)
                     }
+                    if let currentProcess,
+                       currentProcess.processIdentifier != ProcessInfo.processInfo.processIdentifier
+                    {
+                        recentApp = target
+                    }
                 }
             } catch {
                 fail(error)
@@ -195,9 +201,13 @@ final class VizeService {
         let capturedForeground: Any = activity == nil
             ? NSNull()
             : (foreground?.payload as Any? ?? NSNull())
+        let capturedRecentApp: Any = capture.enabled
+            ? (recentApp?.payload as Any? ?? NSNull())
+            : NSNull()
         return [
             "captureEnabled": capture.enabled,
             "foreground": capturedForeground,
+            "recentApp": capturedRecentApp,
             "error": storageError as Any? ?? NSNull(),
             "timer": [
                 "phase": timer.phase.rawValue,

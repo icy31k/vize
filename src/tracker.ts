@@ -31,6 +31,10 @@ export type Status = {
     id: string;
     name: string;
   } | null;
+  recentApp: {
+    id: string;
+    name: string;
+  } | null;
   timer: TimerStatus;
   error: string | null;
 };

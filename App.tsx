@@ -768,6 +768,21 @@ function FocusDesk({
   const [editing, setEditing] = useState(false);
   const [focus, setFocus] = useState('25');
   const [rest, setRest] = useState('5');
+  const recentApp = status?.recentApp;
+  const recentAppGlyph = recentApp?.name.slice(0, 1) ?? '–';
+  const captureStatusLabel = status?.captureEnabled
+    ? 'Waiting for activity'
+    : 'Capture paused';
+  const recentAppLabel = recentApp?.name ?? captureStatusLabel;
+  const recentAppPanelTheme = {
+    backgroundColor: c.panel,
+  };
+  const recentAppGlyphTheme = {
+    backgroundColor: c.accentSoft,
+  };
+  const recentAppGlyphLabelTheme = {
+    color: c.accent,
+  };
   const totals = summarize(data.activities, dayRange(today));
   const visibleCategoriesByDuration = data.categories
     .map(category => ({
@@ -785,7 +800,7 @@ function FocusDesk({
   const headingTheme = {
     color: c.ink,
   };
-  const categoryCountTheme = {
+  const mutedTheme = {
     color: c.muted,
   };
   const categoryRows = visibleCategoriesByDuration.map(({ category, seconds }) => (
@@ -1019,29 +1034,23 @@ function FocusDesk({
           <View
             style={[
               styles.row,
-              layout.foreground,
-              {
-                backgroundColor: c.panel,
-              },
+              layout.recentApp,
+              recentAppPanelTheme,
             ]}
           >
             <View
               style={[
                 layout.appGlyph,
-                {
-                  backgroundColor: c.accentSoft,
-                },
+                recentAppGlyphTheme,
               ]}
             >
               <Text
                 style={[
                   layout.appGlyphLabel,
-                  {
-                    color: c.accent,
-                  },
+                  recentAppGlyphLabelTheme,
                 ]}
               >
-                {status?.foreground?.name.slice(0, 1) ?? '–'}
+                {recentAppGlyph}
               </Text>
             </View>
             <View
@@ -1050,26 +1059,19 @@ function FocusDesk({
               <Text
                 style={[
                   styles.small,
-                  {
-                    color: c.muted,
-                  },
+                  mutedTheme,
                 ]}
               >
-                Foreground app
+                Recent app
               </Text>
               <Text
                 numberOfLines={1}
                 style={[
-                  layout.foregroundName,
-                  {
-                    color: c.ink,
-                  },
+                  layout.recentAppName,
+                  headingTheme,
                 ]}
               >
-                {status?.foreground?.name ??
-                  (status?.captureEnabled
-                    ? 'Waiting for activity'
-                    : 'Capture paused')}
+                {recentAppLabel}
               </Text>
             </View>
           </View>
@@ -1092,7 +1094,7 @@ function FocusDesk({
               <Text
                 style={[
                   styles.small,
-                  categoryCountTheme,
+                  mutedTheme,
                 ]}
               >
                 {categoryCount} categories
@@ -2409,14 +2411,14 @@ const layout = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: -0.7,
   },
-  foreground: {
+  recentApp: {
     minHeight: 66,
     padding: 10,
     borderRadius: 10,
     marginVertical: 17,
     gap: 10,
   },
-  foregroundName: {
+  recentAppName: {
     fontSize: 16,
     fontWeight: '600',
   },
